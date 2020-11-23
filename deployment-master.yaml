@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    cattle.io/creator: norman
+    workload.user.cattle.io/workloadselector: deployment-service-staging-cloud-tracking-service
+  name: crm-member-sync
+  namespace: crm-staging
+spec:
+  minReadySeconds: 120
+  selector:
+    matchLabels:
+      workload.user.cattle.io/workloadselector: deployment-service-staging-cloud-tracking-service
+  template:
+    metadata:
+      labels:
+        workload.user.cattle.io/workloadselector: deployment-service-staging-cloud-tracking-service
+    spec:
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: crm-service-map
+                optional: false
+          image: ${CICD_IMAGE}:${CICD_GIT_BRANCH}-build-${CICD_EXECUTION_SEQUENCE}
+          imagePullPolicy: Always
+          name: crm-member-sync
+          resources: {}
+      imagePullSecrets:
+        - name: efashion

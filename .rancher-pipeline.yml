@@ -1,0 +1,30 @@
+stages:
+  - name: Maven Compile
+    steps:
+      - runScriptConfig:
+          image: docker.tech.efashionchina.com/shared/maven:3.6.0-jdk-8
+          shellScript: mvn clean package  --settings ./maven-settings.xml -Dmaven.test.skip=true
+  - name: Docker Build
+    steps:
+      - publishImageConfig:
+          dockerfilePath: ./Dockerfile
+          buildContext: .
+          tag: docker.tech.efashionchina.com/efashion-crm/cloud-tracking-service:${CICD_GIT_BRANCH}-build-${CICD_EXECUTION_SEQUENCE}
+          pushRemote: true
+          registry: docker.tech.efashionchina.com
+  - name: Deploy
+    steps:
+      - applyYamlConfig:
+          path: ./deployment-${CICD_GIT_BRANCH}.yaml
+timeout: 60
+branch:
+  include:
+    - develop
+    - master
+notification:
+  recipients:
+    - recipient: cloud@efashionchina.com
+      notifier: c-kd7kp:n-4vnmm
+  condition:
+    - Success
+    - Failed
