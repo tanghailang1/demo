@@ -26,4 +26,4 @@ spec:
           name: cloud-tracking-service
           resources: {}
       imagePullSecrets:
-        - name: efashion
+        - name: tencentyun
