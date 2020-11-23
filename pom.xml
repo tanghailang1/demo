@@ -8,10 +8,10 @@
 		<version>2.0.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.efs.cloud</groupId>
-	<artifactId>tracking-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>tracking-service</name>
+	<groupId>com.efs</groupId>
+	<artifactId>cloud-tracking-service</artifactId>
+	<version>1.0.0</version>
+	<name>cloud-tracking-service</name>
 	<description>eFashion Cloud Tracking Service</description>
 
 	<properties>
