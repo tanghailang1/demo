@@ -4,8 +4,8 @@ metadata:
   labels:
     cattle.io/creator: norman
     workload.user.cattle.io/workloadselector: deployment-service-staging-cloud-tracking-service
-  name: crm-member-sync
-  namespace: crm-staging
+  name: cloud-tracking-service
+  namespace: service-staging
 spec:
   minReadySeconds: 120
   selector:
@@ -19,11 +19,11 @@ spec:
       containers:
         - envFrom:
             - configMapRef:
-                name: crm-service-map
+                name: cloud-service-map
                 optional: false
           image: ${CICD_IMAGE}:${CICD_GIT_BRANCH}-build-${CICD_EXECUTION_SEQUENCE}
           imagePullPolicy: Always
-          name: crm-member-sync
+          name: cloud-tracking-service
           resources: {}
       imagePullSecrets:
         - name: efashion
