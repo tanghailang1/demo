@@ -15,6 +15,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+
 /**
  * @author jabez.huang
  */
@@ -98,7 +100,12 @@ public class TrackingPageReceiverComponent {
                     break;
             }
         }catch (Exception e){
-            log.info( "error page:" + e );
+            log.info( "error order:" + e );
+            try {
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(),  false);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

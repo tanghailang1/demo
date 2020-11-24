@@ -19,6 +19,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+
 /**
  * @author jabez.huang
  */
@@ -88,12 +90,17 @@ public class TrackingOrderReceiverComponent {
                     }
                     break;
                 default:
-                    channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
+                    channel.basicAck(message.getMessageProperties().getDeliveryTag(),  false);
                     log.warn( "error order route key:" + message.getMessageProperties().getReceivedRoutingKey() );
                     break;
             }
         }catch (Exception e){
             log.info( "error order:" + e );
+            try {
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(),  false);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

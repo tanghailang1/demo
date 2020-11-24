@@ -155,7 +155,9 @@ public class CalculateCampaignService {
                     .build();
             CalculateCampaignEntity isSave = calculateCampaignRepository.saveAndFlush( calculateCampaignEntityExists );
             if( isSave == null  ){
-                return false;
+                calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("calculate_campaign_cart").content(JSONObject.toJSONString(trackingEventCartEntity)).createTime( currentTime ).build()
+                );
             }
         }else{
             CalculateCampaignEntity calculateCampaignEntityNew = CalculateCampaignEntity.builder()
@@ -173,7 +175,9 @@ public class CalculateCampaignService {
                     .build();
             CalculateCampaignEntity isSave = calculateCampaignRepository.saveAndFlush( calculateCampaignEntityNew );
             if( isSave == null  ){
-                return false;
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_campaign_cart").content(JSONObject.toJSONString(trackingEventCartEntity)).createTime( currentTime ).build()
+                );
             }
         }
 
@@ -228,7 +232,9 @@ public class CalculateCampaignService {
                     .build();
             CalculateCampaignEntity isSave = calculateCampaignRepository.saveAndFlush( calculateCampaignEntityExists );
             if( isSave == null  ){
-                return false;
+                calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("calculate_campaign_order").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
+                );
             }
         }else{
             CalculateCampaignEntity calculateCampaignEntityNew = CalculateCampaignEntity.builder()
@@ -247,9 +253,9 @@ public class CalculateCampaignService {
                     .storeId( trackingEventOrderEntity.getStoreId() )
                     .build();
             CalculateCampaignEntity isSave = calculateCampaignRepository.saveAndFlush( calculateCampaignEntityNew );
-            if( isSave == null  ){
-                return false;
-            }
+            calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("calculate_campaign_order").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
+            );
         }
 
         return true;
