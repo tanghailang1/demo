@@ -43,10 +43,11 @@ public class CalculateActionService {
      * @return
      */
     public Boolean receiveCalculateAction(TrackingEventActionEntity trackingEventActionEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingEventActionEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventActionEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
 
         CalculateActionEntity calculateActionEntity = calculateActionRepository.findByDateAndHourAndMerchantIdAndStoreIdAndType( currentTime,
                 hour, trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), trackingEventActionEntity.getEventType() );
@@ -94,10 +95,12 @@ public class CalculateActionService {
      * @return
      */
     public Boolean receiveCalculateActionSearch(TrackingEventActionEntity trackingEventActionEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingEventActionEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventActionEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+
         CalculateActionSearchEntity calculateActionSearchEntity = calculateActionSearchRepository.findByDateAndHourAndMerchantIdAndStoreIdAndKeyword(
                 currentTime,hour, trackingEventActionEntity.getMerchantId(),
                 trackingEventActionEntity.getStoreId(),trackingEventActionEntity.getEventValue()
@@ -144,10 +147,12 @@ public class CalculateActionService {
      * @return
      */
     public Boolean receiveCalculateActionShare(TrackingEventActionEntity trackingEventActionEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingEventActionEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventActionEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+
         CalculateActionShareEntity calculateActionShareEntity = calculateActionShareRepository.findByDateAndHourAndMerchantIdAndStoreIdAndShare(
                 currentTime,hour, trackingEventActionEntity.getMerchantId(),
                 trackingEventActionEntity.getStoreId(),trackingEventActionEntity.getEventMessage()
@@ -188,10 +193,9 @@ public class CalculateActionService {
         return true;
     }
 
-    private Integer findUniqueId(TrackingEventActionEntity trackingEventActionEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+    private Integer findUniqueId(TrackingEventActionEntity trackingEventActionEntity, Date date){
         List<TrackingEventActionEntity> trackingEventActionEntityList = trackingEventActionRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventActionEntity.getUniqueId(),
-                trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), calendar.getTime() );
+                trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), date );
         Integer union = 1;
         if( trackingEventActionEntityList.size() > 1 ){
             union = 0;

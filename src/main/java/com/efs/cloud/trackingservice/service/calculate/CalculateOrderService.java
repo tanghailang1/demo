@@ -47,11 +47,11 @@ public class CalculateOrderService {
      * @return
      */
     public Boolean receiveCalculateOrderAmount(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventOrderEntity );
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
 
         CalculateOrderAmountEntity calculateOrderAmountEntity = calculateOrderAmountRepository.findByDateAndHourAndSceneAndMerchantIdAndStoreIdAndStatus(
                 currentTime, hour, trackingEventOrderEntity.getScene(), trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), trackingEventOrderEntity.getStatus()  );
@@ -103,12 +103,13 @@ public class CalculateOrderService {
      * @return
      */
     public Boolean receiveCalculateOrderItem(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        Integer union = findCustomerId( trackingEventOrderEntity );
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
@@ -185,12 +186,12 @@ public class CalculateOrderService {
      * @return
      */
     public Boolean receiveCalculateOrderCategory(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventOrderEntity );
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
@@ -259,10 +260,9 @@ public class CalculateOrderService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity, Date date){
         List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventOrderEntity.getCustomerId(),
-                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), calendar.getTime() );
+                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), date );
         Integer union = 1;
         if( trackingEventOrderEntityList.size() > 1 ){
             union = 0;

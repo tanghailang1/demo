@@ -41,15 +41,15 @@ public class CalculateCartService {
      * @return
      */
     public Boolean receiveCalculateCartItem(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventCartEntity );
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventCartEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
 
         CalculateCartItemEntity calculateCartItemEntity = calculateCartItemRepository.findByItemIdAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getItemId(), currentTime,
-                calendar.get(Calendar.HOUR_OF_DAY), trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId() );
+                hour, trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId() );
 
         if (calculateCartItemEntity != null) {
             CalculateCartItemEntity calculateCartItemEntityExists = CalculateCartItemEntity.builder()
@@ -97,10 +97,11 @@ public class CalculateCartService {
      * @return
      */
     public Boolean receiveCalculateCartSku(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventCartEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventCartEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
 
         CalculateCartSkuEntity calculateCartSkuEntity = calculateCartSkuRepository.findBySkuCodeAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getSkuCode(), currentTime,
@@ -148,10 +149,9 @@ public class CalculateCartService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity, Date date){
         List<TrackingEventCartEntity> trackingEventCartEntityList = trackingEventCartRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventCartEntity.getCustomerId(),
-                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(), calendar.getTime() );
+                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(), date );
         Integer union = 1;
         if( trackingEventCartEntityList.size() > 1 ){
             union = 0;

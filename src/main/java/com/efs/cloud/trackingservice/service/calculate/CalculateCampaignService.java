@@ -41,13 +41,17 @@ public class CalculateCampaignService {
      * @return
      */
     public boolean receiveCalculateCampaignPage(TrackingPageViewEntity trackingPageViewEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        List<TrackingPageViewEntity> trackingPageViewEntityListCustomer = trackingPageViewRepository.findByCreateDateAndMerchantIdAndStoreIdAndCustomerId(calendar.getTime(),
+        Date currentTime = trackingPageViewEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        List<TrackingPageViewEntity> trackingPageViewEntityListCustomer = trackingPageViewRepository.findByCreateDateAndMerchantIdAndStoreIdAndCustomerId(currentTime,
                 trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() );
 
         Integer customer = 1;
         List<TrackingPageViewEntity> trackingPageViewEntityList = trackingPageViewRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingPageViewEntity.getUniqueId(),
-                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), calendar.getTime() );
+                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), currentTime );
         Integer union = 1;
         if( trackingPageViewEntityList.size() > 1 ){
             union = 0;
@@ -56,9 +60,6 @@ public class CalculateCampaignService {
         if( trackingPageViewEntityListCustomer.size() > 1 ){
             customer = 0;
         }
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
 
         CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingPageViewEntity.getCampaign(),
@@ -123,9 +124,10 @@ public class CalculateCampaignService {
      * @return
      */
     public boolean receiveCalculateCampaignCart(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventCartEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
         CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getCampaign(),
@@ -184,9 +186,10 @@ public class CalculateCampaignService {
      * @return
      */
     public boolean receiveCalculateCampaignOrder(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
         CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingEventOrderEntity.getCampaign(),
