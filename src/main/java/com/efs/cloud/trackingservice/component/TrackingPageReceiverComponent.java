@@ -2,6 +2,7 @@ package com.efs.cloud.trackingservice.component;
 
 import com.alibaba.fastjson.JSON;
 import com.efs.cloud.trackingservice.dto.TrackingPageInputDTO;
+import com.efs.cloud.trackingservice.entity.entity.PageViewDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.service.calculate.CalculateCampaignService;
 import com.efs.cloud.trackingservice.service.calculate.CalculatePageViewService;
@@ -38,8 +39,8 @@ public class TrackingPageReceiverComponent {
             log.info("=============> page key:"+key);
             switch ( key ) {
                 case "sync.page.tracking.page":
-                    TrackingPageInputDTO trackingPageInputDTO = objectMapper.readValue(body, TrackingPageInputDTO.class);
-                    Boolean isAck = trackingPageService.receivePageView( trackingPageInputDTO );
+                    PageViewDTOEntity pageViewDTOEntity = objectMapper.readValue(body, PageViewDTOEntity.class);
+                    Boolean isAck = trackingPageService.receivePageView( pageViewDTOEntity );
                     if( isAck ){
                         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
                     }else{

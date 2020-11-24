@@ -1,6 +1,6 @@
 package com.efs.cloud.trackingservice.entity.entity;
 
-import com.efs.cloud.trackingservice.dto.TrackingOrderInputDTO;
+import com.efs.cloud.trackingservice.dto.TrackingCartInputDTO;
 import lombok.Builder;
 import lombok.Data;
 import java.util.Date;
@@ -9,8 +9,7 @@ import java.util.Date;
  */
 @Builder
 @Data
-public class OrderDTOEntity {
-    private String orderStatus;
+public class CartDTOEntity {
     private Date time;
-    private TrackingOrderInputDTO trackingOrderInputDTO;
+    private TrackingCartInputDTO trackingCartInputDTO;
 }

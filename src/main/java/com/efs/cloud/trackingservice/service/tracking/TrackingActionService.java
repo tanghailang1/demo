@@ -42,7 +42,8 @@ public class TrackingActionService {
      * @return
      */
     public ServiceResult eventTrackingAction(TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum){
-        String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
+        String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().time(
+                Calendar.getInstance(Locale.CHINA).getTime()).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
                 .trackingActionInputDTO( trackingActionInputDTO ).build() );
         trackingSenderComponent.sendTracking( "sync.action.tracking.action", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
@@ -55,7 +56,7 @@ public class TrackingActionService {
      */
     public Boolean receiveEventAction(ActionDTOEntity actionDTOEntity){
         TrackingActionInputDTO trackingActionInputDTO = actionDTOEntity.getTrackingActionInputDTO();
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+
         TrackingEventActionEntity trackingEventActionEntity = TrackingEventActionEntity.builder().eventType( actionDTOEntity.getType() )
                 .eventValue( trackingActionInputDTO.getValue() )
                 .eventMessage( actionDTOEntity.getValue() )
@@ -67,8 +68,8 @@ public class TrackingActionService {
                 .merchantId( trackingActionInputDTO.getMerchantId() )
                 .storeId( trackingActionInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingActionInputDTO.getData()) )
-                .createDate( calendar.getTime() )
-                .createTime( calendar.getTime() ).build();
+                .createDate( actionDTOEntity.getTime() )
+                .createTime( actionDTOEntity.getTime() ).build();
         TrackingEventActionEntity trackingActionEntityNew = trackingEventActionRepository.saveAndFlush( trackingEventActionEntity );
 
         if( trackingActionEntityNew != null ){

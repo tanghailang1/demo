@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingPageInputDTO;
+import com.efs.cloud.trackingservice.entity.entity.PageViewDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
@@ -45,7 +46,8 @@ public class TrackingPageService {
      * @return
      */
     public ServiceResult pageTrackingView(TrackingPageInputDTO trackingPageInputDTO){
-        String jsonObject = JSONObject.toJSONString( trackingPageInputDTO );
+        PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() ).trackingPageInputDTO( trackingPageInputDTO ).build();
+        String jsonObject = JSONObject.toJSONString( pageViewDTOEntity );
         trackingSenderComponent.sendTracking( "sync.page.tracking.page", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
     }
@@ -60,12 +62,11 @@ public class TrackingPageService {
 
     /**
      * 记录Tracking Page View 基础信息
-     * @param trackingPageInputDTO
+     * @param pageViewDTOEntity
      * @return
      */
-    public Boolean receivePageView(TrackingPageInputDTO trackingPageInputDTO){
-
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+    public Boolean receivePageView(PageViewDTOEntity pageViewDTOEntity){
+        TrackingPageInputDTO trackingPageInputDTO = pageViewDTOEntity.getTrackingPageInputDTO();
 
         TrackingPageViewEntity trackingPageViewEntity = TrackingPageViewEntity.builder()
                 .action( trackingPageInputDTO.getTitle() )
@@ -80,8 +81,8 @@ public class TrackingPageService {
                 .model( trackingPageInputDTO.getModel() )
                 .size( trackingPageInputDTO.getSize() )
                 .data( DataConvertUtil.objectConvertJson(trackingPageInputDTO.getData()) )
-                .createTime( calendar.getTime() )
-                .createDate( calendar.getTime() )
+                .createTime( pageViewDTOEntity.getTime() )
+                .createDate( pageViewDTOEntity.getTime() )
                 .build();
 
         TrackingPageViewEntity trackingPageViewEntityNew = trackingPageViewRepository.saveAndFlush( trackingPageViewEntity );

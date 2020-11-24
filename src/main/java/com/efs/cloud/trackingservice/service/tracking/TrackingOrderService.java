@@ -46,7 +46,7 @@ public class TrackingOrderService {
      * @return
      */
     public ServiceResult eventTrackingOrder(TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
-        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
+        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime()).orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
         trackingSenderComponent.sendTracking( "sync.order.tracking.order", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
     }
@@ -59,8 +59,6 @@ public class TrackingOrderService {
     public Boolean receiveEventOrder(OrderDTOEntity orderDTOEntity) {
         TrackingOrderInputDTO trackingOrderInputDTO = orderDTOEntity.getTrackingOrderInputDTO();
         String status = orderDTOEntity.getOrderStatus();
-
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
 
         String receiveOther = "";
         if( !"".equals(trackingOrderInputDTO.getOrderItems().toString()) ){
@@ -85,8 +83,8 @@ public class TrackingOrderService {
                 .merchantId( trackingOrderInputDTO.getMerchantId() )
                 .storeId( trackingOrderInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingOrderInputDTO.getData()) )
-                .createDate( calendar.getTime() )
-                .createTime( calendar.getTime() )
+                .createDate( orderDTOEntity.getTime() )
+                .createTime( orderDTOEntity.getTime() )
                 .build();
         TrackingEventOrderEntity trackingEventOrderEntityNew = trackingEventOrderRepository.saveAndFlush( trackingEventOrderEntity );
         if( trackingEventOrderEntityNew != null ){

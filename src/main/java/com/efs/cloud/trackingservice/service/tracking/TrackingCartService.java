@@ -5,6 +5,7 @@ import com.efs.cloud.trackingservice.ServiceResult;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingActionInputDTO;
 import com.efs.cloud.trackingservice.dto.TrackingCartInputDTO;
+import com.efs.cloud.trackingservice.entity.entity.CartDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventCartEntity;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
@@ -42,7 +43,8 @@ public class TrackingCartService {
      * @return
      */
     public ServiceResult eventTrackingCart(TrackingCartInputDTO trackingCartInputDTO){
-        String jsonObject = JSONObject.toJSONString( trackingCartInputDTO );
+        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() ).trackingCartInputDTO( trackingCartInputDTO ).build();
+        String jsonObject = JSONObject.toJSONString( cartDTOEntity );
         log.info( "==============> pageTrackingCart:"+jsonObject );
         trackingSenderComponent.sendTracking( "sync.cart.tracking.cart", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
@@ -50,11 +52,11 @@ public class TrackingCartService {
 
     /**
      * 存储基础事件
-     * @param trackingCartInputDTO
+     * @param cartDTOEntity
      * @return
      */
-    public Boolean receiveEventCart(TrackingCartInputDTO trackingCartInputDTO) {
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
+    public Boolean receiveEventCart(CartDTOEntity cartDTOEntity) {
+        TrackingCartInputDTO trackingCartInputDTO = cartDTOEntity.getTrackingCartInputDTO();
 
         TrackingEventCartEntity trackingEventCartEntity = TrackingEventCartEntity.builder()
                 .itemName( trackingCartInputDTO.getItemName() )
@@ -70,8 +72,8 @@ public class TrackingCartService {
                 .merchantId( trackingCartInputDTO.getMerchantId() )
                 .storeId( trackingCartInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingCartInputDTO.getData()) )
-                .createDate( calendar.getTime() )
-                .createTime( calendar.getTime() )
+                .createDate( cartDTOEntity.getTime() )
+                .createTime( cartDTOEntity.getTime() )
                 .build();
         TrackingEventCartEntity trackingEventCartEntityNew = trackingEventCartRepository.saveAndFlush( trackingEventCartEntity );
         if( trackingEventCartEntityNew != null ){

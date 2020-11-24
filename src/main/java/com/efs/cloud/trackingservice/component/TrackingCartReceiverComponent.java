@@ -3,6 +3,7 @@ package com.efs.cloud.trackingservice.component;
 import com.alibaba.fastjson.JSON;
 import com.efs.cloud.trackingservice.dto.TrackingActionInputDTO;
 import com.efs.cloud.trackingservice.dto.TrackingCartInputDTO;
+import com.efs.cloud.trackingservice.entity.entity.CartDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventCartEntity;
 import com.efs.cloud.trackingservice.service.calculate.CalculateActionService;
@@ -42,8 +43,8 @@ public class TrackingCartReceiverComponent {
             log.info("=============> cart key:"+key);
             switch ( key ) {
                 case "sync.cart.tracking.cart":
-                    TrackingCartInputDTO trackingCartInputDTO = objectMapper.readValue(body, TrackingCartInputDTO.class);
-                    Boolean isAck = trackingCartService.receiveEventCart( trackingCartInputDTO );
+                    CartDTOEntity cartDTOEntity = objectMapper.readValue(body, CartDTOEntity.class);
+                    Boolean isAck = trackingCartService.receiveEventCart( cartDTOEntity );
                     if( isAck ){
                         channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
                     }else{
