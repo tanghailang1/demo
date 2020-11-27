@@ -1,7 +1,9 @@
 package com.efs.cloud.trackingservice.service.tracking;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingPageInputDTO;
 import com.efs.cloud.trackingservice.entity.entity.PageViewDTOEntity;
@@ -14,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+
+import static com.efs.cloud.trackingservice.Global.*;
 
 /**
  * 页面Tracking
@@ -39,7 +43,8 @@ public class TrackingPageService {
     private TrackingSenderComponent trackingSenderComponent;
     @Autowired
     private TrackingPageViewRepository trackingPageViewRepository;
-
+    @Autowired
+    private ElasticComponent elasticComponent;
     /**
      * 跟踪记录页面
      * @param trackingPageInputDTO
@@ -87,6 +92,10 @@ public class TrackingPageService {
 
         TrackingPageViewEntity trackingPageViewEntityNew = trackingPageViewRepository.saveAndFlush( trackingPageViewEntity );
         if( trackingPageViewEntityNew.getTId() != null ){
+            //推送ES
+            String body = JSON.toJSONString(trackingPageViewEntityNew);
+            elasticComponent.pushDocument(TRACKING_PAGE_INDEX,TRACKING_PAGE_INDEX_TYPE,trackingPageViewEntityNew.getTId().toString(),body);
+
             //page view
             if( isCalculatePageTracking ){
                 trackingSenderComponent.sendTracking( "sync.page.calculate.page", JSONObject.toJSONString( trackingPageViewEntityNew ) );

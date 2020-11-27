@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateOrderAmountEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateOrderCategoryEntity;
@@ -12,6 +13,7 @@ import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderAmountRe
 import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderCategoryRepository;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderItemRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_ORDER_INDEX;
 
 /**
  * @author jabez.huang
@@ -40,7 +44,8 @@ public class CalculateOrderService {
     private CalculateOrderCategoryRepository calculateOrderCategoryRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计渠道订单金额
      * @param trackingEventOrderEntity
@@ -113,13 +118,14 @@ public class CalculateOrderService {
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
-            List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByItemIdAndMerchantIdAndStoreId(
+            ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByItemIdAndMerchantIdAndStoreIdAndCreateDate(
+                    TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getItemId(),
                     trackingEventOrderEntity.getMerchantId(),
                     trackingEventOrderEntity.getStoreId(),
                     sdf.format( currentTime )
             );
-            if( trackingEventOrderEntityList.size() > 0 ){
+            if( trackingEventOrderEntitySdr.getHits().getTotal() > 0 ){
                 CalculateOrderItemEntity calculateOrderItemEntity = calculateOrderItemRepository.findByItemIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
                         orderItemDTOEntity.getItemId(),
                         trackingEventOrderEntity.getScene(),
@@ -195,13 +201,14 @@ public class CalculateOrderService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
-            List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(
+            ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(
+                    TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getCategoryId(),
                     trackingEventOrderEntity.getMerchantId(),
                     trackingEventOrderEntity.getStoreId(),
                     sdf.format( currentTime )
             );
-            if( trackingEventOrderEntityList.size() > 0 ){
+            if( trackingEventOrderEntitySdr.getHits().getTotal() > 0 ){
                 CalculateOrderCategoryEntity calculateOrderCategoryEntity = calculateOrderCategoryRepository.findByCategoryIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
                         orderItemDTOEntity.getCategoryId(),
                         trackingEventOrderEntity.getScene(),
@@ -261,10 +268,10 @@ public class CalculateOrderService {
     }
 
     private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity, Date date){
-        List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventOrderEntity.getCustomerId(),
-                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), date );
+        ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId( TRACKING_ORDER_INDEX,date,
+                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(),trackingEventOrderEntity.getCustomerId()  );
         Integer union = 1;
-        if( trackingEventOrderEntityList.size() > 1 ){
+        if( trackingEventOrderEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;

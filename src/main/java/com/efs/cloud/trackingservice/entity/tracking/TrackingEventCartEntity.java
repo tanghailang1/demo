@@ -1,5 +1,6 @@
 package com.efs.cloud.trackingservice.entity.tracking;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,8 @@ public class TrackingEventCartEntity{
     private Integer storeId;
     private String data;
     @Temporal(TemporalType.DATE)
+    @JSONField(format = "yyyy-MM-dd")
     private Date createDate;
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 }

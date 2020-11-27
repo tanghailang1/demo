@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingOrderInputDTO;
 import com.efs.cloud.trackingservice.entity.entity.OrderDTOEntity;
@@ -16,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+
+import static com.efs.cloud.trackingservice.Global.*;
 
 /**
  * @author jabez.huang
@@ -38,7 +42,8 @@ public class TrackingOrderService {
     private TrackingEventOrderRepository trackingEventOrderRepository;
     @Autowired
     private TrackingSenderComponent trackingSenderComponent;
-
+    @Autowired
+    private ElasticComponent elasticComponent;
 
     /**
      * 记录加购事件
@@ -56,6 +61,7 @@ public class TrackingOrderService {
      * @param orderDTOEntity
      * @return
      */
+    @Transactional
     public Boolean receiveEventOrder(OrderDTOEntity orderDTOEntity) {
         TrackingOrderInputDTO trackingOrderInputDTO = orderDTOEntity.getTrackingOrderInputDTO();
         String status = orderDTOEntity.getOrderStatus();
@@ -88,6 +94,11 @@ public class TrackingOrderService {
                 .build();
         TrackingEventOrderEntity trackingEventOrderEntityNew = trackingEventOrderRepository.saveAndFlush( trackingEventOrderEntity );
         if( trackingEventOrderEntityNew != null ){
+            //推送ES
+            String body = JSON.toJSONString(trackingEventOrderEntityNew);
+            log.info("ES push body:" + body);
+            elasticComponent.pushDocument(TRACKING_ORDER_INDEX,TRACKING_ORDER_INDEX_TYPE,trackingEventOrderEntityNew.getToId().toString(),body);
+
             //order amount
             if( isTrackingOrderAmount ){
                 trackingSenderComponent.sendTracking("sync.order.calculate.order_amount", JSONObject.toJSONString( trackingEventOrderEntityNew ));

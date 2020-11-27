@@ -1,7 +1,9 @@
 package com.efs.cloud.trackingservice.service.tracking;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingActionInputDTO;
 import com.efs.cloud.trackingservice.entity.entity.ActionDTOEntity;
@@ -13,9 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.*;
 
 /**
  * @author jabez.huang
@@ -35,6 +40,8 @@ public class TrackingActionService {
     private TrackingSenderComponent trackingSenderComponent;
     @Autowired
     private TrackingEventActionRepository trackingEventActionRepository;
+    @Autowired
+    private ElasticComponent elasticComponent;
 
     /**
      * 设置页面行为事件
@@ -54,6 +61,7 @@ public class TrackingActionService {
      * @param actionDTOEntity
      * @return
      */
+    @Transactional
     public Boolean receiveEventAction(ActionDTOEntity actionDTOEntity){
         TrackingActionInputDTO trackingActionInputDTO = actionDTOEntity.getTrackingActionInputDTO();
 
@@ -73,6 +81,10 @@ public class TrackingActionService {
         TrackingEventActionEntity trackingActionEntityNew = trackingEventActionRepository.saveAndFlush( trackingEventActionEntity );
 
         if( trackingActionEntityNew != null ){
+            //推送ES
+            String body = JSON.toJSONString(trackingActionEntityNew);
+            elasticComponent.pushDocument(TRACKING_ACTION_INDEX,TRACKING_ACTION_INDEX_TYPE,trackingActionEntityNew.getTaId().toString(),body);
+
             //action
             if( isCalculateAction ){
                 trackingSenderComponent.sendTracking("sync.action.calculate.action", JSONObject.toJSONString( trackingActionEntityNew ));

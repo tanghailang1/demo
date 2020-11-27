@@ -2,6 +2,7 @@ package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateCampaignEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventCartEntity;
@@ -11,6 +12,7 @@ import com.efs.cloud.trackingservice.enums.OrderStatusEnum;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateCampaignRepository;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ import java.util.Date;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_PAGE_INDEX;
 
 /**
  * @author jabez.huang
@@ -34,6 +38,8 @@ public class CalculateCampaignService {
     private CalculateCampaignRepository calculateCampaignRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
+    @Autowired
+    private ElasticsearchService elasticsearchService;
 
     /**
      * Campaign 渠道计算流量
@@ -46,18 +52,18 @@ public class CalculateCampaignService {
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-        List<TrackingPageViewEntity> trackingPageViewEntityListCustomer = trackingPageViewRepository.findByCreateDateAndMerchantIdAndStoreIdAndCustomerId(currentTime,
+        ElasticComponent.SearchDocumentResponse trackingPageViewEntityCustomerSdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_PAGE_INDEX,currentTime,
                 trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() );
 
         Integer customer = 1;
-        List<TrackingPageViewEntity> trackingPageViewEntityList = trackingPageViewRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingPageViewEntity.getUniqueId(),
+        ElasticComponent.SearchDocumentResponse trackingPageViewEntityUnionSdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( TRACKING_PAGE_INDEX,trackingPageViewEntity.getUniqueId(),
                 trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), currentTime );
         Integer union = 1;
-        if( trackingPageViewEntityList.size() > 1 ){
+        if( trackingPageViewEntityUnionSdr.getHits().getTotal() > 1 ){
             union = 0;
         }
 
-        if( trackingPageViewEntityListCustomer.size() > 1 ){
+        if( trackingPageViewEntityCustomerSdr.getHits().getTotal() > 1 ){
             customer = 0;
         }
 

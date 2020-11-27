@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateCartItemEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateCartSkuEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
@@ -9,6 +10,7 @@ import com.efs.cloud.trackingservice.repository.calculate.CalculateCartItemRepos
 import com.efs.cloud.trackingservice.repository.calculate.CalculateCartSkuRepository;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventCartRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_CART_INDEX;
 
 /**
  * @author jabez.huang
@@ -34,7 +38,8 @@ public class CalculateCartService {
     private CalculateCartSkuRepository calculateCartSkuRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计购物车商品
      * @param trackingEventCartEntity
@@ -150,10 +155,10 @@ public class CalculateCartService {
     }
 
     private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity, Date date){
-        List<TrackingEventCartEntity> trackingEventCartEntityList = trackingEventCartRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventCartEntity.getCustomerId(),
-                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(), date );
+        ElasticComponent.SearchDocumentResponse trackingEventCartEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_CART_INDEX, date,
+                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(),trackingEventCartEntity.getCustomerId() );
         Integer union = 1;
-        if( trackingEventCartEntityList.size() > 1 ){
+        if( trackingEventCartEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;

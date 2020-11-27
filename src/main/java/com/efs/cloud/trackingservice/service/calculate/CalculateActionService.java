@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.enums.EventTypeEnum;
@@ -9,6 +10,7 @@ import com.efs.cloud.trackingservice.repository.calculate.CalculateActionSearchR
 import com.efs.cloud.trackingservice.repository.calculate.CalculateActionShareRepository;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_ACTION_INDEX;
 
 /**
  * @author jabez.huang
@@ -36,6 +40,8 @@ public class CalculateActionService {
     private CalculateActionShareRepository calculateActionShareRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
+    @Autowired
+    private ElasticsearchService elasticsearchService;
 
     /**
      * Action基础计算
@@ -194,10 +200,10 @@ public class CalculateActionService {
     }
 
     private Integer findUniqueId(TrackingEventActionEntity trackingEventActionEntity, Date date){
-        List<TrackingEventActionEntity> trackingEventActionEntityList = trackingEventActionRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventActionEntity.getUniqueId(),
+        ElasticComponent.SearchDocumentResponse trackingEventActionEntitySdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate(TRACKING_ACTION_INDEX,trackingEventActionEntity.getUniqueId(),
                 trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), date );
         Integer union = 1;
-        if( trackingEventActionEntityList.size() > 1 ){
+        if( trackingEventActionEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;

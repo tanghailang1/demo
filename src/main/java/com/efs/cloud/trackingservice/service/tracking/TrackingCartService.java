@@ -1,7 +1,9 @@
 package com.efs.cloud.trackingservice.service.tracking;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingActionInputDTO;
 import com.efs.cloud.trackingservice.dto.TrackingCartInputDTO;
@@ -10,6 +12,7 @@ import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventCartEntity;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventCartRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.*;
 
 /**
  * @author jabez.huang
@@ -36,7 +41,8 @@ public class TrackingCartService {
     private TrackingEventCartRepository trackingEventCartRepository;
     @Autowired
     private TrackingSenderComponent trackingSenderComponent;
-
+    @Autowired
+    private ElasticComponent elasticComponent;
     /**
      * 记录加购事件
      * @param trackingCartInputDTO
@@ -77,6 +83,10 @@ public class TrackingCartService {
                 .build();
         TrackingEventCartEntity trackingEventCartEntityNew = trackingEventCartRepository.saveAndFlush( trackingEventCartEntity );
         if( trackingEventCartEntityNew != null ){
+            //推送ES
+            String body = JSON.toJSONString(trackingEventCartEntityNew);
+            elasticComponent.pushDocument(TRACKING_CART_INDEX,TRACKING_CART_INDEX_TYPE,trackingEventCartEntityNew.getTcId().toString(),body);
+
             //cart item
             if( isTrackingCartItem ){
                 trackingSenderComponent.sendTracking("sync.cart.calculate.cart_item", JSONObject.toJSONString( trackingEventCartEntityNew ));

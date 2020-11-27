@@ -1,10 +1,12 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.repository.calculate.*;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.Local;
 import org.joda.time.DateTime;
@@ -15,6 +17,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_PAGE_INDEX;
 
 /**
  * Page 计算组合Service
@@ -37,7 +41,8 @@ public class CalculatePageViewService {
     private CalculatePagePathRepository calculatePagePathRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计PageView
      * @param trackingPageViewEntity
@@ -49,9 +54,9 @@ public class CalculatePageViewService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         if( trackingPageViewEntity.getCustomerId() > 1 ){
-            List<TrackingPageViewEntity> trackingPageViewEntityListCustomer = trackingPageViewRepository.findByCreateDateAndMerchantIdAndStoreIdAndCustomerId(currentTime,
+            ElasticComponent.SearchDocumentResponse trackingPageViewEntityCustomerSdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_PAGE_INDEX,currentTime,
                     trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() );
-            if( trackingPageViewEntityListCustomer.size() > 1 ){
+            if( trackingPageViewEntityCustomerSdr.getHits().getTotal() > 1 ){
                 customer = 1;
             }
         }
@@ -274,10 +279,10 @@ public class CalculatePageViewService {
     }
 
     private Integer findUniqueId(TrackingPageViewEntity trackingPageViewEntity, Date date){
-        List<TrackingPageViewEntity> trackingPageViewEntityList = trackingPageViewRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingPageViewEntity.getUniqueId(),
+        ElasticComponent.SearchDocumentResponse trackingPageViewEntitySdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( TRACKING_PAGE_INDEX,trackingPageViewEntity.getUniqueId(),
                 trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), date );
         Integer union = 1;
-        if( trackingPageViewEntityList.size() > 1 ){
+        if( trackingPageViewEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;
