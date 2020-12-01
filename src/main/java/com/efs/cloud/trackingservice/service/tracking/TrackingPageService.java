@@ -117,7 +117,7 @@ public class TrackingPageService {
             }
 
             //campaign
-            if( isCalculateCampaign && !"".equals(trackingPageInputDTO.getCampaign()) ){
+            if( isCalculateCampaign && trackingPageInputDTO.getCampaign() != null && !"".equals(trackingPageInputDTO.getCampaign()) ){
                 trackingSenderComponent.sendTracking( "sync.page.calculate.campaign_page", JSONObject.toJSONString( trackingPageViewEntityNew ) );
             }
 

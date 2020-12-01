@@ -27,6 +27,7 @@ public enum EventTypeEnum {
     REFUND_SUCCESS("REFUND_SUCCESS","退款成功"),
     OUT_OF_STOCK("OUT_OF_STOCK","缺货"),
     ARRIVAL_REMIND("ARRIVAL_REMIND","到货提醒"),
+    ADD_FAVORITE("ADD_FAVORITE","加入收藏"),
     OTHER("OTHER","其他");
 
     private String value;
