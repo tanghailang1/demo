@@ -27,6 +27,7 @@ public class CalculateCampaignEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer campaignCalculateId;
     private String campaignName;
+    private Integer scene;
     private Integer pvCount;
     private Integer uvCount;
     private Integer customerCount;

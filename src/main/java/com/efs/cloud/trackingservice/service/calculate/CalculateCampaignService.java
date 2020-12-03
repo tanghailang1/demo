@@ -67,8 +67,9 @@ public class CalculateCampaignService {
             customer = 0;
         }
 
-        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
+        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndSceneAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingPageViewEntity.getCampaign(),
+                trackingPageViewEntity.getScene(),
                 currentTime,
                 hour,
                 trackingPageViewEntity.getMerchantId(),
@@ -78,6 +79,7 @@ public class CalculateCampaignService {
             CalculateCampaignEntity calculateCampaignEntityExists = CalculateCampaignEntity.builder()
                     .campaignCalculateId( calculateCampaignEntity.getCampaignCalculateId() )
                     .campaignName( calculateCampaignEntity.getCampaignName() )
+                    .scene(calculateCampaignEntity.getScene())
                     .pvCount( calculateCampaignEntity.getPvCount() + 1 )
                     .uvCount( calculateCampaignEntity.getUvCount() + union )
                     .customerCount( calculateCampaignEntity.getCustomerCount() + customer )
@@ -100,6 +102,7 @@ public class CalculateCampaignService {
         }else{
             CalculateCampaignEntity calculateCampaignEntityNew = CalculateCampaignEntity.builder()
                     .campaignName( trackingPageViewEntity.getCampaign() )
+                    .scene(trackingPageViewEntity.getScene())
                     .pvCount( 1 )
                     .uvCount( 1 )
                     .customerCount( customer )
@@ -135,8 +138,9 @@ public class CalculateCampaignService {
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
+        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndSceneAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getCampaign(),
+                trackingEventCartEntity.getScene(),
                 currentTime,
                 hour,
                 trackingEventCartEntity.getMerchantId(),
@@ -146,6 +150,7 @@ public class CalculateCampaignService {
             CalculateCampaignEntity calculateCampaignEntityExists = CalculateCampaignEntity.builder()
                     .campaignCalculateId( calculateCampaignEntity.getCampaignCalculateId() )
                     .campaignName( calculateCampaignEntity.getCampaignName() )
+                    .scene(calculateCampaignEntity.getScene())
                     .pvCount( calculateCampaignEntity.getPvCount() )
                     .uvCount( calculateCampaignEntity.getUvCount() )
                     .customerCount( calculateCampaignEntity.getCustomerCount() )
@@ -168,6 +173,7 @@ public class CalculateCampaignService {
         }else{
             CalculateCampaignEntity calculateCampaignEntityNew = CalculateCampaignEntity.builder()
                     .campaignName( trackingEventCartEntity.getCampaign() )
+                    .scene(trackingEventCartEntity.getScene())
                     .pvCount( 1 )
                     .uvCount( 1 )
                     .customerCount( 1 )
@@ -201,8 +207,9 @@ public class CalculateCampaignService {
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(
+        CalculateCampaignEntity calculateCampaignEntity = calculateCampaignRepository.findByCampaignNameAndSceneAndCreateDateAndHourAndMerchantIdAndStoreId(
                 trackingEventOrderEntity.getCampaign(),
+                trackingEventOrderEntity.getScene(),
                 currentTime,
                 hour,
                 trackingEventOrderEntity.getMerchantId(),
@@ -223,6 +230,7 @@ public class CalculateCampaignService {
             CalculateCampaignEntity calculateCampaignEntityExists = CalculateCampaignEntity.builder()
                     .campaignCalculateId( calculateCampaignEntity.getCampaignCalculateId() )
                     .campaignName( calculateCampaignEntity.getCampaignName() )
+                    .scene(calculateCampaignEntity.getScene())
                     .pvCount( calculateCampaignEntity.getPvCount() )
                     .uvCount( calculateCampaignEntity.getUvCount() )
                     .customerCount( calculateCampaignEntity.getCustomerCount() )
@@ -245,6 +253,7 @@ public class CalculateCampaignService {
         }else{
             CalculateCampaignEntity calculateCampaignEntityNew = CalculateCampaignEntity.builder()
                     .campaignName( trackingEventOrderEntity.getCampaign() )
+                    .scene(trackingEventOrderEntity.getScene())
                     .pvCount( 1 )
                     .uvCount( 1 )
                     .customerCount( 1 )
@@ -259,9 +268,11 @@ public class CalculateCampaignService {
                     .storeId( trackingEventOrderEntity.getStoreId() )
                     .build();
             CalculateCampaignEntity isSave = calculateCampaignRepository.saveAndFlush( calculateCampaignEntityNew );
-            calculateLogRepository.saveAndFlush(
-                    CalculateLogEntity.builder().type("calculate_campaign_order").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
-            );
+            if( isSave == null  ) {
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_campaign_order").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime(currentTime).build()
+                );
+            }
         }
 
         return true;
