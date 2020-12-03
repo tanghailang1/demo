@@ -10,6 +10,7 @@ import com.efs.cloud.trackingservice.entity.entity.ActionDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.enums.EventTypeEnum;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
+import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,15 +43,19 @@ public class TrackingActionService {
     private TrackingEventActionRepository trackingEventActionRepository;
     @Autowired
     private ElasticComponent elasticComponent;
+    @Autowired
+    private JwtService jwtService;
 
     /**
      * 设置页面行为事件
+     * @param jwt
      * @param trackingActionInputDTO
      * @return
      */
-    public ServiceResult eventTrackingAction(TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum){
+    public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum){
         String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().time(
                 Calendar.getInstance(Locale.CHINA).getTime()).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
+                .jwt(jwt)
                 .trackingActionInputDTO( trackingActionInputDTO ).build() );
         trackingSenderComponent.sendTracking( "sync.action.tracking.action", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
@@ -61,9 +66,9 @@ public class TrackingActionService {
      * @param actionDTOEntity
      * @return
      */
-    @Transactional
     public Boolean receiveEventAction(ActionDTOEntity actionDTOEntity){
         TrackingActionInputDTO trackingActionInputDTO = actionDTOEntity.getTrackingActionInputDTO();
+        Integer customerId = jwtService.getCustomerId(actionDTOEntity.getJwt());
 
         TrackingEventActionEntity trackingEventActionEntity = TrackingEventActionEntity.builder().eventType( actionDTOEntity.getType() )
                 .eventValue( trackingActionInputDTO.getValue() )
@@ -72,7 +77,7 @@ public class TrackingActionService {
                 .scene( trackingActionInputDTO.getScene() )
                 .campaign( trackingActionInputDTO.getCampaign() )
                 .uniqueId( trackingActionInputDTO.getUniqueId() )
-                .customerId( trackingActionInputDTO.getCustomerId() )
+                .customerId( customerId )
                 .merchantId( trackingActionInputDTO.getMerchantId() )
                 .storeId( trackingActionInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingActionInputDTO.getData()) )

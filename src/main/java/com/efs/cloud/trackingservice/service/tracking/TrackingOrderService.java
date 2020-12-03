@@ -7,11 +7,14 @@ import com.efs.cloud.trackingservice.ServiceResult;
 import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingOrderInputDTO;
+import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
 import com.efs.cloud.trackingservice.entity.entity.OrderDTOEntity;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventOrderEntity;
 import com.efs.cloud.trackingservice.enums.OrderStatusEnum;
+import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
+import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,14 +47,21 @@ public class TrackingOrderService {
     private TrackingSenderComponent trackingSenderComponent;
     @Autowired
     private ElasticComponent elasticComponent;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private CalculateLogRepository calculateLogRepository;
 
     /**
      * 记录加购事件
+     * @param jwt
      * @param trackingOrderInputDTO
      * @return
      */
-    public ServiceResult eventTrackingOrder(TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
-        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime()).orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
+    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
+        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime())
+                .jwt(jwt)
+                .orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
         trackingSenderComponent.sendTracking( "sync.order.tracking.order", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
     }
@@ -61,11 +71,16 @@ public class TrackingOrderService {
      * @param orderDTOEntity
      * @return
      */
-    @Transactional
     public Boolean receiveEventOrder(OrderDTOEntity orderDTOEntity) {
         TrackingOrderInputDTO trackingOrderInputDTO = orderDTOEntity.getTrackingOrderInputDTO();
         String status = orderDTOEntity.getOrderStatus();
-
+        Integer customerId = jwtService.getCustomerId(orderDTOEntity.getJwt());
+        if (0 == customerId){
+            calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("tracking_order").content(JSONObject.toJSONString(orderDTOEntity)).createTime( orderDTOEntity.getTime() ).build()
+            );
+            return true;
+        }
         String receiveOther = "";
         if( !"".equals(trackingOrderInputDTO.getOrderItems().toString()) ){
             List<OrderItemDTOEntity> list = trackingOrderInputDTO.getOrderItems();
@@ -85,7 +100,7 @@ public class TrackingOrderService {
                 .campaign( trackingOrderInputDTO.getCampaign() )
                 .uniqueId( trackingOrderInputDTO.getUniqueId() )
                 .orderId( trackingOrderInputDTO.getOrderId() )
-                .customerId( trackingOrderInputDTO.getCustomerId() )
+                .customerId( customerId )
                 .merchantId( trackingOrderInputDTO.getMerchantId() )
                 .storeId( trackingOrderInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingOrderInputDTO.getData()) )

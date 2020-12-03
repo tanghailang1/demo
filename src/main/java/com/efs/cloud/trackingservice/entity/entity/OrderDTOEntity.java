@@ -11,6 +11,7 @@ import java.util.Date;
 @Data
 public class OrderDTOEntity {
     private String orderStatus;
+    private String jwt;
     private Date time;
     private TrackingOrderInputDTO trackingOrderInputDTO;
 }

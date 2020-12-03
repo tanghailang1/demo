@@ -9,6 +9,7 @@ import com.efs.cloud.trackingservice.dto.TrackingPageInputDTO;
 import com.efs.cloud.trackingservice.entity.entity.PageViewDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
+import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,13 +46,18 @@ public class TrackingPageService {
     private TrackingPageViewRepository trackingPageViewRepository;
     @Autowired
     private ElasticComponent elasticComponent;
+    @Autowired
+    private JwtService jwtService;
     /**
      * 跟踪记录页面
+     * @param jwt
      * @param trackingPageInputDTO
      * @return
      */
-    public ServiceResult pageTrackingView(TrackingPageInputDTO trackingPageInputDTO){
-        PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() ).trackingPageInputDTO( trackingPageInputDTO ).build();
+    public ServiceResult pageTrackingView(String jwt, TrackingPageInputDTO trackingPageInputDTO){
+        PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() )
+                .jwt(jwt)
+                .trackingPageInputDTO( trackingPageInputDTO ).build();
         String jsonObject = JSONObject.toJSONString( pageViewDTOEntity );
         trackingSenderComponent.sendTracking( "sync.page.tracking.page", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
@@ -72,11 +78,12 @@ public class TrackingPageService {
      */
     public Boolean receivePageView(PageViewDTOEntity pageViewDTOEntity){
         TrackingPageInputDTO trackingPageInputDTO = pageViewDTOEntity.getTrackingPageInputDTO();
+        Integer customerId = jwtService.getCustomerId(pageViewDTOEntity.getJwt());
 
         TrackingPageViewEntity trackingPageViewEntity = TrackingPageViewEntity.builder()
                 .action( trackingPageInputDTO.getTitle() )
                 .uniqueId( trackingPageInputDTO.getUniqueId() )
-                .customerId( trackingPageInputDTO.getCustomerId() )
+                .customerId( customerId )
                 .scene( trackingPageInputDTO.getScene() )
                 .path(trackingPageInputDTO.getPath())
                 .ip( trackingPageInputDTO.getIp() )

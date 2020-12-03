@@ -7,12 +7,15 @@ import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingActionInputDTO;
 import com.efs.cloud.trackingservice.dto.TrackingCartInputDTO;
+import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
 import com.efs.cloud.trackingservice.entity.entity.CartDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventCartEntity;
+import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventCartRepository;
 import com.efs.cloud.trackingservice.service.ElasticsearchService;
+import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,13 +46,20 @@ public class TrackingCartService {
     private TrackingSenderComponent trackingSenderComponent;
     @Autowired
     private ElasticComponent elasticComponent;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private CalculateLogRepository calculateLogRepository;
     /**
      * 记录加购事件
+     * @param jwt
      * @param trackingCartInputDTO
      * @return
      */
-    public ServiceResult eventTrackingCart(TrackingCartInputDTO trackingCartInputDTO){
-        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() ).trackingCartInputDTO( trackingCartInputDTO ).build();
+    public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO){
+        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() )
+                .jwt(jwt)
+                .trackingCartInputDTO( trackingCartInputDTO ).build();
         String jsonObject = JSONObject.toJSONString( cartDTOEntity );
         log.info( "==============> pageTrackingCart:"+jsonObject );
         trackingSenderComponent.sendTracking( "sync.cart.tracking.cart", jsonObject );
@@ -63,7 +73,13 @@ public class TrackingCartService {
      */
     public Boolean receiveEventCart(CartDTOEntity cartDTOEntity) {
         TrackingCartInputDTO trackingCartInputDTO = cartDTOEntity.getTrackingCartInputDTO();
-
+        Integer customerId = jwtService.getCustomerId(cartDTOEntity.getJwt());
+        if (0 == customerId){
+            calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("tracking_cart").content(JSONObject.toJSONString(cartDTOEntity)).createTime( cartDTOEntity.getTime() ).build()
+            );
+            return true;
+        }
         TrackingEventCartEntity trackingEventCartEntity = TrackingEventCartEntity.builder()
                 .itemName( trackingCartInputDTO.getItemName() )
                 .itemId( trackingCartInputDTO.getItemId() )
@@ -74,7 +90,7 @@ public class TrackingCartService {
                 .scene( trackingCartInputDTO.getScene() )
                 .campaign( trackingCartInputDTO.getCampaign() )
                 .uniqueId( trackingCartInputDTO.getUniqueId() )
-                .customerId( trackingCartInputDTO.getCustomerId() )
+                .customerId( customerId )
                 .merchantId( trackingCartInputDTO.getMerchantId() )
                 .storeId( trackingCartInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingCartInputDTO.getData()) )

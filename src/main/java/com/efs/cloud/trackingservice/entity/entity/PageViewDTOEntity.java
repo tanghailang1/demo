@@ -10,6 +10,7 @@ import java.util.Date;
 @Data
 @Builder
 public class PageViewDTOEntity {
+    private String jwt;
     private Date time;
     private TrackingPageInputDTO trackingPageInputDTO;
 }

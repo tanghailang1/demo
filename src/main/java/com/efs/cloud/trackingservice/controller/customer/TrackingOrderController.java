@@ -28,10 +28,11 @@ public class TrackingOrderController {
     @ApiOperation(value = "记录支付事件", notes = "记录支付事件")
     @PostMapping
     public ResponseEntity<ServiceResult> eventTrackingCart(
+            @RequestHeader(value = "jwt", required = false) String jwt,
             @RequestParam(value="orderStatus") OrderStatusEnum orderStatusEnum,
             @RequestBody TrackingOrderInputDTO trackingOrderInputDTO
     ){
-        return new ResponseEntity<>( trackingOrderService.eventTrackingOrder(trackingOrderInputDTO,orderStatusEnum), HttpStatus.OK);
+        return new ResponseEntity<>( trackingOrderService.eventTrackingOrder(jwt,trackingOrderInputDTO,orderStatusEnum), HttpStatus.OK);
     }
 
 }

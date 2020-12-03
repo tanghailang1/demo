@@ -10,6 +10,7 @@ import java.util.Date;
 @Builder
 @Data
 public class CartDTOEntity {
+    private String jwt;
     private Date time;
     private TrackingCartInputDTO trackingCartInputDTO;
 }

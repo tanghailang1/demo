@@ -13,6 +13,7 @@ import java.util.Date;
 public class ActionDTOEntity {
     private String type;
     private String value;
+    private String jwt;
     private Date time;
     private TrackingActionInputDTO trackingActionInputDTO;
 }
