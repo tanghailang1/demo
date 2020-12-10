@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.IPUtils;
 import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
@@ -281,7 +282,7 @@ public class CalculateOrderService {
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
         String ip = trackingEventOrderEntity.getIp();
-        String city = getAddressCity(ip);
+        String city = IPUtils.getAddressCity(ip);
         CalculateOrderAreaEntity calculateOrderAreaEntity = calculateOrderAreaRepository.findByCreateDateAndCityAndHourAndSceneAndMerchantIdAndStoreId(
                 currentTime,
                 city,
@@ -356,35 +357,4 @@ public class CalculateOrderService {
         return union;
     }
 
-    /**
-     * 根据ip获取城市
-     * @param ip
-     * @return
-     */
-    public static String getAddressCity(String ip){
-        File database = new File(".\\cloud-tracking-service\\src\\main\\resources\\GeoLite2-City.mmdb");
-        CityResponse response = null;
-        try {
-            DatabaseReader reader = new DatabaseReader.Builder(database).build();
-            InetAddress ipAddress = InetAddress.getByName(ip);
-            response = reader.city(ipAddress);
-            // 获取国家信息
-            Country country = response.getCountry();
-            // 获取省份
-            Subdivision subdivision = response.getMostSpecificSubdivision();
-            // 获取城市
-            City city = response.getCity();
-
-            if (city.getNames().get("zh-CN") != null){
-                return city.getNames().get("zh-CN");
-            }else if(subdivision.getNames().get("zh-CN") != null){
-                return subdivision.getNames().get("zh-CN");
-            }else {
-                return country.getNames().get("zh-CN");
-            }
-        } catch (Exception e) {
-            log.error("ip获取城市error:" + ip + "," + e.getMessage());
-        }
-        return "";
-    }
 }
