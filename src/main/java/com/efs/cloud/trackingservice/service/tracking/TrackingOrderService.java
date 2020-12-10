@@ -39,6 +39,8 @@ public class TrackingOrderService {
     private Boolean isTrackingOrderItem;
     @Value("${sync.calculate.order_category}")
     private Boolean isTrackingOrderCategory;
+    @Value("${sync.calculate.order_area}")
+    private Boolean isTrackingOrderArea;
     @Value("${sync.calculate.order_campaign}")
     private boolean isCalculateCampaign;
     @Autowired
@@ -127,6 +129,11 @@ public class TrackingOrderService {
             //order category
             if( isTrackingOrderCategory ){
                 trackingSenderComponent.sendTracking("sync.order.calculate.order_category", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+            }
+
+            //order area
+            if( isTrackingOrderArea ){
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_area", JSONObject.toJSONString( trackingEventOrderEntityNew ));
             }
 
             //campaign

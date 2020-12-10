@@ -50,7 +50,7 @@ public class ElasticsearchService {
         return searchDocumentResponse;
     }
 
-    public ElasticComponent.SearchDocumentResponse findByItemIdAndMerchantIdAndStoreIdAndCreateDate(String index,Integer itemId, Integer merchantId, Integer storeId, String createDate){
+    public ElasticComponent.SearchDocumentResponse findByItemIdAndMerchantIdAndStoreIdAndCreateDate(String index,Integer itemId, Integer merchantId, Integer storeId, Date createDate){
         StringBuilder stringBuilder = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         stringBuilder.append("{");
@@ -66,7 +66,7 @@ public class ElasticsearchService {
 
     }
 
-    public ElasticComponent.SearchDocumentResponse findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(String index,Integer categoryId, Integer merchantId, Integer storeId, String createDate){
+    public ElasticComponent.SearchDocumentResponse findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(String index,Integer categoryId, Integer merchantId, Integer storeId, Date createDate){
         StringBuilder stringBuilder = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         stringBuilder.append("{");
