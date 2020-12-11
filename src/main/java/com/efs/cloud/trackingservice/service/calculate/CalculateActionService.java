@@ -161,8 +161,10 @@ public class CalculateActionService {
         Integer union = findUniqueId( trackingEventActionEntity, currentTime );
         Integer itemAmount = 0;
         Integer itemOrderCount = 0;
+        JSONObject valueJson = JSONObject.parseObject(trackingEventActionEntity.getEventValue());
+        String itemId = valueJson.getString("itemId");
         CalculateOrderItemEntity calculateOrderItemEntity = calculateOrderItemRepository.findByItemIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
-                Integer.parseInt(trackingEventActionEntity.getEventValue()),
+                Integer.parseInt(itemId),
                 trackingEventActionEntity.getScene(),
                 trackingEventActionEntity.getMerchantId(),
                 trackingEventActionEntity.getStoreId(),
@@ -180,7 +182,7 @@ public class CalculateActionService {
                 hour,
                 trackingEventActionEntity.getMerchantId(),
                 trackingEventActionEntity.getStoreId(),
-                Integer.parseInt(trackingEventActionEntity.getEventValue()),
+                Integer.parseInt(itemId),
                 trackingEventActionEntity.getCampaign()
         );
         if (calculateActionPdpItemEntity != null) {
@@ -195,6 +197,9 @@ public class CalculateActionService {
                     .storeId( calculateActionPdpItemEntity.getStoreId() )
                     .pvCount( calculateActionPdpItemEntity.getPvCount() + 1)
                     .uvCount( calculateActionPdpItemEntity.getUvCount() + union )
+                    .itemCode(calculateActionPdpItemEntity.getItemCode())
+                    .imageSrc(calculateActionPdpItemEntity.getImageSrc())
+                    .itemName(calculateActionPdpItemEntity.getItemName())
                     .itemId( calculateActionPdpItemEntity.getItemId() ).build();
             CalculateActionPdpItemEntity isSave = calculateActionPdpItemRepository.saveAndFlush( calculateActionPdpItemEntityExists );
             if( isSave == null ){
@@ -209,7 +214,10 @@ public class CalculateActionService {
                     .campaignName(trackingEventActionEntity.getCampaign())
                     .merchantId( trackingEventActionEntity.getMerchantId() )
                     .storeId( trackingEventActionEntity.getStoreId() )
-                    .itemId( Integer.parseInt(trackingEventActionEntity.getEventValue()) )
+                    .itemId(Integer.parseInt(itemId) )
+                    .itemName(valueJson.getString("itemName"))
+                    .itemCode(valueJson.getString("itemCode"))
+                    .imageSrc(valueJson.getString("imageSrc"))
                     .pvCount( 1 )
                     .uvCount( 1 )
                     .itemAmount(itemAmount)

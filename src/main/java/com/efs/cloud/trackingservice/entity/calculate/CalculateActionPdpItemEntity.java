@@ -1,5 +1,6 @@
 package com.efs.cloud.trackingservice.entity.calculate;
 
+import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +29,9 @@ public class CalculateActionPdpItemEntity implements Serializable {
     @Column(columnDefinition = "smallint")
     private Integer hour;
     private Integer itemId;
+    private String itemName;
+    private String itemCode;
+    private String imageSrc;
     private String campaignName;
     private Integer pvCount;
     private Integer uvCount;
