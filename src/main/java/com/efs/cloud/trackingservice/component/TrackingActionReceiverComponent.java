@@ -70,6 +70,15 @@ public class TrackingActionReceiverComponent {
                         channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
                     }
                     break;
+                case "sync.action.calculate.action_pdp_item":
+                    TrackingEventActionEntity trackingActionPdpItemEntity = JSON.parseObject(body, TrackingEventActionEntity.class);
+                    Boolean isCalPdpItemAck = calculateActionService.receiveCalculateActionPdpItem( trackingActionPdpItemEntity );
+                    if( isCalPdpItemAck ){
+                        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                    }else{
+                        channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+                    }
+                    break;
                 case "sync.action.calculate.action_share":
                     TrackingEventActionEntity trackingActionShareEntity = JSON.parseObject(body, TrackingEventActionEntity.class);
                     Boolean isCalShareAck = calculateActionService.receiveCalculateActionShare( trackingActionShareEntity );

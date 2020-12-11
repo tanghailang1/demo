@@ -37,6 +37,8 @@ public class TrackingActionService {
     private Boolean isCalculateActionSearch;
     @Value("${sync.calculate.action_share}")
     private Boolean isCalculateActionShare;
+    @Value("${sync.calculate.action_pdp_item}")
+    private Boolean isCalculateActionPdpItem;
     @Autowired
     private TrackingSenderComponent trackingSenderComponent;
     @Autowired
@@ -99,6 +101,13 @@ public class TrackingActionService {
             if( isCalculateActionSearch ){
                 if( trackingActionEntityNew.getEventType().equals(EventTypeEnum.SEARCH.getValue()) ){
                     trackingSenderComponent.sendTracking("sync.action.calculate.action_search", JSONObject.toJSONString( trackingActionEntityNew ));
+                }
+            }
+
+            //action pdp_item
+            if( isCalculateActionPdpItem ){
+                if( trackingActionEntityNew.getEventType().equals(EventTypeEnum.PDP_ITEM.getValue()) ){
+                    trackingSenderComponent.sendTracking("sync.action.calculate.action_pdp_item", JSONObject.toJSONString( trackingActionEntityNew ));
                 }
             }
 

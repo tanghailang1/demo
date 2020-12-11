@@ -5,10 +5,7 @@ import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventActionEntity;
 import com.efs.cloud.trackingservice.enums.EventTypeEnum;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateActionRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateActionSearchRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateActionShareRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
+import com.efs.cloud.trackingservice.repository.calculate.*;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
 import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +39,10 @@ public class CalculateActionService {
     private CalculateLogRepository calculateLogRepository;
     @Autowired
     private ElasticsearchService elasticsearchService;
+    @Autowired
+    private CalculateActionPdpItemRepository calculateActionPdpItemRepository;
+    @Autowired
+    private CalculateOrderItemRepository calculateOrderItemRepository;
 
     /**
      * Action基础计算
@@ -141,6 +142,83 @@ public class CalculateActionService {
             if( isSave == null ){
                 calculateLogRepository.saveAndFlush(
                     CalculateLogEntity.builder().type("calculate_action_search").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
+                );
+            }
+        }
+        return true;
+    }
+
+    /**
+     * ActionPDP商品统计
+     * @param trackingEventActionEntity
+     * @return
+     */
+    public Boolean receiveCalculateActionPdpItem(TrackingEventActionEntity trackingEventActionEntity){
+        Date currentTime = trackingEventActionEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer itemAmount = 0;
+        Integer itemOrderCount = 0;
+        CalculateOrderItemEntity calculateOrderItemEntity = calculateOrderItemRepository.findByItemIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
+                Integer.parseInt(trackingEventActionEntity.getEventValue()),
+                trackingEventActionEntity.getScene(),
+                trackingEventActionEntity.getMerchantId(),
+                trackingEventActionEntity.getStoreId(),
+                currentTime,
+                hour,
+                "PAY_SUCCESS"
+        );
+        if (calculateOrderItemEntity != null){
+            itemAmount = calculateOrderItemEntity.getItemAmount();
+            itemOrderCount = calculateOrderItemEntity.getItemOrderCount();
+        }
+
+        CalculateActionPdpItemEntity calculateActionPdpItemEntity = calculateActionPdpItemRepository.findByDateAndHourAndMerchantIdAndStoreIdAndItemIdAndCampaignName(
+                currentTime,
+                hour,
+                trackingEventActionEntity.getMerchantId(),
+                trackingEventActionEntity.getStoreId(),
+                Integer.parseInt(trackingEventActionEntity.getEventValue()),
+                trackingEventActionEntity.getCampaign()
+        );
+        if (calculateActionPdpItemEntity != null) {
+            CalculateActionPdpItemEntity calculateActionPdpItemEntityExists = CalculateActionPdpItemEntity.builder()
+                    .pdpItemId( calculateActionPdpItemEntity.getPdpItemId() )
+                    .date( currentTime )
+                    .hour( hour )
+                    .merchantId( calculateActionPdpItemEntity.getMerchantId() )
+                    .campaignName(calculateActionPdpItemEntity.getCampaignName())
+                    .itemAmount(itemAmount)
+                    .itemOrderCount(itemOrderCount)
+                    .storeId( calculateActionPdpItemEntity.getStoreId() )
+                    .pvCount( calculateActionPdpItemEntity.getPvCount() + 1)
+                    .uvCount( calculateActionPdpItemEntity.getUvCount() + union )
+                    .itemId( calculateActionPdpItemEntity.getItemId() ).build();
+            CalculateActionPdpItemEntity isSave = calculateActionPdpItemRepository.saveAndFlush( calculateActionPdpItemEntityExists );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_action_pdp_item").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
+                );
+            }
+        }else{
+            CalculateActionPdpItemEntity calculateActionPdpItemEntityNew = CalculateActionPdpItemEntity.builder()
+                    .date( currentTime )
+                    .hour( hour )
+                    .campaignName(trackingEventActionEntity.getCampaign())
+                    .merchantId( trackingEventActionEntity.getMerchantId() )
+                    .storeId( trackingEventActionEntity.getStoreId() )
+                    .itemId( Integer.parseInt(trackingEventActionEntity.getEventValue()) )
+                    .pvCount( 1 )
+                    .uvCount( 1 )
+                    .itemAmount(itemAmount)
+                    .itemOrderCount(itemOrderCount)
+                    .build();
+            CalculateActionPdpItemEntity isSave = calculateActionPdpItemRepository.saveAndFlush( calculateActionPdpItemEntityNew );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_action_pdp_item").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
                 );
             }
         }
