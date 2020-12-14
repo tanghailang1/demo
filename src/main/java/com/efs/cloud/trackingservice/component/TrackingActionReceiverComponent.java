@@ -19,6 +19,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+
 /**
  * @author jabez.huang
  */
@@ -68,6 +70,15 @@ public class TrackingActionReceiverComponent {
                         channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
                     }
                     break;
+                case "sync.action.calculate.action_pdp_item":
+                    TrackingEventActionEntity trackingActionPdpItemEntity = JSON.parseObject(body, TrackingEventActionEntity.class);
+                    Boolean isCalPdpItemAck = calculateActionService.receiveCalculateActionPdpItem( trackingActionPdpItemEntity );
+                    if( isCalPdpItemAck ){
+                        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                    }else{
+                        channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+                    }
+                    break;
                 case "sync.action.calculate.action_share":
                     TrackingEventActionEntity trackingActionShareEntity = JSON.parseObject(body, TrackingEventActionEntity.class);
                     Boolean isCalShareAck = calculateActionService.receiveCalculateActionShare( trackingActionShareEntity );
@@ -78,12 +89,17 @@ public class TrackingActionReceiverComponent {
                     }
                     break;
                 default:
-                    channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, false);
+                    channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
                     log.warn( "error action route key:" + message.getMessageProperties().getReceivedRoutingKey() );
                     break;
             }
         }catch (Exception e){
-            log.info( "error action:" + e );
+            log.info( "error order:" + e );
+            try {
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(),  false);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }

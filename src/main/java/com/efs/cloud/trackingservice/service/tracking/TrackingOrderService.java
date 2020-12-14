@@ -4,20 +4,27 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.efs.cloud.trackingservice.ServiceResult;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.component.TrackingSenderComponent;
 import com.efs.cloud.trackingservice.dto.TrackingOrderInputDTO;
+import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
 import com.efs.cloud.trackingservice.entity.entity.OrderDTOEntity;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventOrderEntity;
 import com.efs.cloud.trackingservice.enums.OrderStatusEnum;
+import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
+import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+
+import static com.efs.cloud.trackingservice.Global.*;
 
 /**
  * @author jabez.huang
@@ -32,21 +39,31 @@ public class TrackingOrderService {
     private Boolean isTrackingOrderItem;
     @Value("${sync.calculate.order_category}")
     private Boolean isTrackingOrderCategory;
+    @Value("${sync.calculate.order_area}")
+    private Boolean isTrackingOrderArea;
     @Value("${sync.calculate.order_campaign}")
     private boolean isCalculateCampaign;
     @Autowired
     private TrackingEventOrderRepository trackingEventOrderRepository;
     @Autowired
     private TrackingSenderComponent trackingSenderComponent;
-
+    @Autowired
+    private ElasticComponent elasticComponent;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private CalculateLogRepository calculateLogRepository;
 
     /**
      * 记录加购事件
+     * @param jwt
      * @param trackingOrderInputDTO
      * @return
      */
-    public ServiceResult eventTrackingOrder(TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
-        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
+    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
+        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime())
+                .jwt(jwt)
+                .orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
         trackingSenderComponent.sendTracking( "sync.order.tracking.order", jsonObject );
         return ServiceResult.builder().code(200).data(null).msg("Success").build();
     }
@@ -59,9 +76,13 @@ public class TrackingOrderService {
     public Boolean receiveEventOrder(OrderDTOEntity orderDTOEntity) {
         TrackingOrderInputDTO trackingOrderInputDTO = orderDTOEntity.getTrackingOrderInputDTO();
         String status = orderDTOEntity.getOrderStatus();
-
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-
+        Integer customerId = jwtService.getCustomerId(orderDTOEntity.getJwt());
+        if (0 == customerId){
+            calculateLogRepository.saveAndFlush(
+                    CalculateLogEntity.builder().type("tracking_order").content(JSONObject.toJSONString(orderDTOEntity)).createTime( orderDTOEntity.getTime() ).build()
+            );
+            return true;
+        }
         String receiveOther = "";
         if( !"".equals(trackingOrderInputDTO.getOrderItems().toString()) ){
             List<OrderItemDTOEntity> list = trackingOrderInputDTO.getOrderItems();
@@ -81,15 +102,20 @@ public class TrackingOrderService {
                 .campaign( trackingOrderInputDTO.getCampaign() )
                 .uniqueId( trackingOrderInputDTO.getUniqueId() )
                 .orderId( trackingOrderInputDTO.getOrderId() )
-                .customerId( trackingOrderInputDTO.getCustomerId() )
+                .customerId( customerId )
                 .merchantId( trackingOrderInputDTO.getMerchantId() )
                 .storeId( trackingOrderInputDTO.getStoreId() )
                 .data( DataConvertUtil.objectConvertJson(trackingOrderInputDTO.getData()) )
-                .createDate( calendar.getTime() )
-                .createTime( calendar.getTime() )
+                .createDate( orderDTOEntity.getTime() )
+                .createTime( orderDTOEntity.getTime() )
                 .build();
         TrackingEventOrderEntity trackingEventOrderEntityNew = trackingEventOrderRepository.saveAndFlush( trackingEventOrderEntity );
         if( trackingEventOrderEntityNew != null ){
+            //推送ES
+            String body = JSON.toJSONString(trackingEventOrderEntityNew);
+            log.info("ES push body:" + body);
+            elasticComponent.pushDocument(TRACKING_ORDER_INDEX,TRACKING_ORDER_INDEX_TYPE,trackingEventOrderEntityNew.getToId().toString(),body);
+
             //order amount
             if( isTrackingOrderAmount ){
                 trackingSenderComponent.sendTracking("sync.order.calculate.order_amount", JSONObject.toJSONString( trackingEventOrderEntityNew ));
@@ -103,6 +129,11 @@ public class TrackingOrderService {
             //order category
             if( isTrackingOrderCategory ){
                 trackingSenderComponent.sendTracking("sync.order.calculate.order_category", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+            }
+
+            //order area
+            if( isTrackingOrderArea ){
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_area", JSONObject.toJSONString( trackingEventOrderEntityNew ));
             }
 
             //campaign

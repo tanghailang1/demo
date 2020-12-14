@@ -28,9 +28,10 @@ public class TrackingPageController {
     @ApiOperation(value = "记录跟踪页面", notes = "记录跟踪页面")
     @PostMapping
     public ResponseEntity<ServiceResult> pageTrackingView(
+            @RequestHeader(value = "jwt", required = false) String jwt,
             @RequestBody TrackingPageInputDTO trackingPageInputDTO
     ){
-        return new ResponseEntity<>( trackingPageService.pageTrackingView(trackingPageInputDTO), HttpStatus.OK);
+        return new ResponseEntity<>( trackingPageService.pageTrackingView(jwt,trackingPageInputDTO), HttpStatus.OK);
     }
 
     @ApiOperation(value = "获取全局唯一UnionId", notes = "获取全局唯一UnionId")

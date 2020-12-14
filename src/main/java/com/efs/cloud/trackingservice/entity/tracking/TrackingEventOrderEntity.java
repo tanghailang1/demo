@@ -2,6 +2,7 @@ package com.efs.cloud.trackingservice.entity.tracking;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,7 +45,9 @@ public class TrackingEventOrderEntity{
     private Integer storeId;
     private String data;
     @Temporal(TemporalType.DATE)
+    @JSONField(format = "yyyy-MM-dd")
     private Date createDate;
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
     public List<OrderItemDTOEntity> getOrderItems(){

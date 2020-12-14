@@ -1,26 +1,34 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
-import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
-import com.efs.cloud.trackingservice.entity.calculate.CalculateOrderAmountEntity;
-import com.efs.cloud.trackingservice.entity.calculate.CalculateOrderCategoryEntity;
-import com.efs.cloud.trackingservice.entity.calculate.CalculateOrderItemEntity;
+import com.efs.cloud.trackingservice.IPUtils;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
+import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingEventOrderEntity;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderAmountRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderCategoryRepository;
-import com.efs.cloud.trackingservice.repository.calculate.CalculateOrderItemRepository;
+import com.efs.cloud.trackingservice.enums.OrderStatusEnum;
+import com.efs.cloud.trackingservice.repository.calculate.*;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.WebServiceClient;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.City;
+import com.maxmind.geoip2.record.Country;
+import com.maxmind.geoip2.record.Subdivision;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_ORDER_INDEX;
 
 /**
  * @author jabez.huang
@@ -39,19 +47,22 @@ public class CalculateOrderService {
     @Autowired
     private CalculateOrderCategoryRepository calculateOrderCategoryRepository;
     @Autowired
+    private CalculateOrderAreaRepository calculateOrderAreaRepository;
+    @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计渠道订单金额
      * @param trackingEventOrderEntity
      * @return
      */
     public Boolean receiveCalculateOrderAmount(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventOrderEntity );
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
 
         CalculateOrderAmountEntity calculateOrderAmountEntity = calculateOrderAmountRepository.findByDateAndHourAndSceneAndMerchantIdAndStoreIdAndStatus(
                 currentTime, hour, trackingEventOrderEntity.getScene(), trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), trackingEventOrderEntity.getStatus()  );
@@ -103,22 +114,23 @@ public class CalculateOrderService {
      * @return
      */
     public Boolean receiveCalculateOrderItem(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
 
-        Integer union = findCustomerId( trackingEventOrderEntity );
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
-            List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByItemIdAndMerchantIdAndStoreId(
+            ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByItemIdAndMerchantIdAndStoreIdAndCreateDate(
+                    TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getItemId(),
                     trackingEventOrderEntity.getMerchantId(),
                     trackingEventOrderEntity.getStoreId(),
-                    sdf.format( currentTime )
+                    currentTime
             );
-            if( trackingEventOrderEntityList.size() > 0 ){
+            if( trackingEventOrderEntitySdr.getHits().getTotal() > 0 ){
                 CalculateOrderItemEntity calculateOrderItemEntity = calculateOrderItemRepository.findByItemIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
                         orderItemDTOEntity.getItemId(),
                         trackingEventOrderEntity.getScene(),
@@ -185,22 +197,22 @@ public class CalculateOrderService {
      * @return
      */
     public Boolean receiveCalculateOrderCategory(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventOrderEntity );
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
-            List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(
+            ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(
+                    TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getCategoryId(),
                     trackingEventOrderEntity.getMerchantId(),
                     trackingEventOrderEntity.getStoreId(),
-                    sdf.format( currentTime )
+                    currentTime
             );
-            if( trackingEventOrderEntityList.size() > 0 ){
+            if( trackingEventOrderEntitySdr.getHits().getTotal() > 0 ){
                 CalculateOrderCategoryEntity calculateOrderCategoryEntity = calculateOrderCategoryRepository.findByCategoryIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
                         orderItemDTOEntity.getCategoryId(),
                         trackingEventOrderEntity.getScene(),
@@ -259,12 +271,87 @@ public class CalculateOrderService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        List<TrackingEventOrderEntity> trackingEventOrderEntityList = trackingEventOrderRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventOrderEntity.getCustomerId(),
-                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), calendar.getTime() );
+    /**
+     * 统计Order所属城市
+     * @param trackingEventOrderEntity
+     * @return
+     */
+    public boolean receiveCalculateOrderArea(TrackingEventOrderEntity trackingEventOrderEntity){
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        String ip = trackingEventOrderEntity.getIp();
+        String city = IPUtils.getAddressCity(ip);
+        CalculateOrderAreaEntity calculateOrderAreaEntity = calculateOrderAreaRepository.findByCreateDateAndCityAndHourAndSceneAndMerchantIdAndStoreId(
+                currentTime,
+                city,
+                hour,
+                trackingEventOrderEntity.getScene(),
+                trackingEventOrderEntity.getMerchantId(),
+                trackingEventOrderEntity.getStoreId()
+        );
+        Integer createOrderCount = 0;
+        Integer createOrderAmount = 0;
+        Integer orderCount = 0;
+        Integer orderAmount = 0;
+        if( OrderStatusEnum.ORDER_PAY.getValue().equals(trackingEventOrderEntity.getStatus())){
+            createOrderCount = 1;
+            createOrderAmount = trackingEventOrderEntity.getOrderAmount();
+        }else{
+            orderCount = 1;
+            orderAmount = trackingEventOrderEntity.getOrderAmount();
+        }
+
+        if( calculateOrderAreaEntity != null ){
+            CalculateOrderAreaEntity calculateOrderAreaEntityExists = CalculateOrderAreaEntity.builder()
+                    .orderAreaId( calculateOrderAreaEntity.getOrderAreaId() )
+                    .city( calculateOrderAreaEntity.getCity() )
+                    .scene(calculateOrderAreaEntity.getScene())
+                    .createOrderCount( calculateOrderAreaEntity.getCreateOrderCount() + createOrderCount )
+                    .createOrderAmount( calculateOrderAreaEntity.getCreateOrderAmount() + createOrderAmount )
+                    .orderCount( calculateOrderAreaEntity.getOrderCount() + orderCount )
+                    .orderAmount( calculateOrderAreaEntity.getOrderAmount() + orderAmount )
+                    .createDate( calculateOrderAreaEntity.getCreateDate() )
+                    .hour( calculateOrderAreaEntity.getHour() )
+                    .merchantId( calculateOrderAreaEntity.getMerchantId() )
+                    .storeId( calculateOrderAreaEntity.getStoreId() )
+                    .build();
+            CalculateOrderAreaEntity isSave = calculateOrderAreaRepository.saveAndFlush( calculateOrderAreaEntityExists );
+            if( isSave == null  ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_order_area").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
+                );
+            }
+        }else{
+            CalculateOrderAreaEntity calculateOrderAreaEntityNew = CalculateOrderAreaEntity.builder()
+                    .city( city )
+                    .scene(trackingEventOrderEntity.getScene())
+                    .createOrderCount( createOrderCount )
+                    .createOrderAmount( createOrderAmount )
+                    .orderCount( orderCount )
+                    .orderAmount( orderAmount )
+                    .createDate( currentTime )
+                    .hour( hour )
+                    .merchantId( trackingEventOrderEntity.getMerchantId() )
+                    .storeId( trackingEventOrderEntity.getStoreId() )
+                    .build();
+            CalculateOrderAreaEntity isSave = calculateOrderAreaRepository.saveAndFlush( calculateOrderAreaEntityNew );
+            if( isSave == null  ) {
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_order_area").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime(currentTime).build()
+                );
+            }
+        }
+
+        return true;
+    }
+
+    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity, Date date){
+        ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId( TRACKING_ORDER_INDEX,date,
+                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(),trackingEventOrderEntity.getCustomerId()  );
         Integer union = 1;
-        if( trackingEventOrderEntityList.size() > 1 ){
+        if( trackingEventOrderEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;

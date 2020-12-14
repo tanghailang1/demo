@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateCartItemEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateCartSkuEntity;
 import com.efs.cloud.trackingservice.entity.calculate.CalculateLogEntity;
@@ -9,6 +10,7 @@ import com.efs.cloud.trackingservice.repository.calculate.CalculateCartItemRepos
 import com.efs.cloud.trackingservice.repository.calculate.CalculateCartSkuRepository;
 import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventCartRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_CART_INDEX;
 
 /**
  * @author jabez.huang
@@ -34,22 +38,23 @@ public class CalculateCartService {
     private CalculateCartSkuRepository calculateCartSkuRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计购物车商品
      * @param trackingEventCartEntity
      * @return
      */
     public Boolean receiveCalculateCartItem(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventCartEntity );
-
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventCartEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
 
         CalculateCartItemEntity calculateCartItemEntity = calculateCartItemRepository.findByItemIdAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getItemId(), currentTime,
-                calendar.get(Calendar.HOUR_OF_DAY), trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId() );
+                hour, trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId() );
 
         if (calculateCartItemEntity != null) {
             CalculateCartItemEntity calculateCartItemEntityExists = CalculateCartItemEntity.builder()
@@ -97,10 +102,11 @@ public class CalculateCartService {
      * @return
      */
     public Boolean receiveCalculateCartSku(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findCustomerId( trackingEventCartEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingEventCartEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
 
         CalculateCartSkuEntity calculateCartSkuEntity = calculateCartSkuRepository.findBySkuCodeAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getSkuCode(), currentTime,
@@ -148,12 +154,11 @@ public class CalculateCartService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        List<TrackingEventCartEntity> trackingEventCartEntityList = trackingEventCartRepository.findByCustomerIdAndMerchantIdAndStoreIdAndCreateDate( trackingEventCartEntity.getCustomerId(),
-                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(), calendar.getTime() );
+    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity, Date date){
+        ElasticComponent.SearchDocumentResponse trackingEventCartEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_CART_INDEX, date,
+                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(),trackingEventCartEntity.getCustomerId() );
         Integer union = 1;
-        if( trackingEventCartEntityList.size() > 1 ){
+        if( trackingEventCartEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;

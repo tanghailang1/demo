@@ -27,9 +27,10 @@ public class TrackingCartController {
     @ApiOperation(value = "记录商品加购事件", notes = "记录商品加购事件")
     @PostMapping
     public ResponseEntity<ServiceResult> eventTrackingCart(
+            @RequestHeader(value = "jwt", required = false) String jwt,
             @RequestBody TrackingCartInputDTO trackingCartInputDTO
     ){
-        return new ResponseEntity<>( trackingCartService.eventTrackingCart(trackingCartInputDTO), HttpStatus.OK);
+        return new ResponseEntity<>( trackingCartService.eventTrackingCart(jwt,trackingCartInputDTO), HttpStatus.OK);
     }
 
 }

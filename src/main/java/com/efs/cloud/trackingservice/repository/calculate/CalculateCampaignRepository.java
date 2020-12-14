@@ -20,7 +20,7 @@ public interface CalculateCampaignRepository extends JpaRepository<CalculateCamp
      * @param storeId
      * @return
      */
-    CalculateCampaignEntity findByCampaignNameAndCreateDateAndHourAndMerchantIdAndStoreId(String campaignName, Date createDate, Integer hour, Integer merchantId, Integer storeId);
+    CalculateCampaignEntity findByCampaignNameAndSceneAndCreateDateAndHourAndMerchantIdAndStoreId(String campaignName,Integer scene, Date createDate, Integer hour, Integer merchantId, Integer storeId);
 
 
 }

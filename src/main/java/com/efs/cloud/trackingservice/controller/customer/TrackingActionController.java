@@ -28,10 +28,11 @@ public class TrackingActionController {
     @ApiOperation(value = "记录页面行为事件", notes = "记录页面行为事件")
     @PostMapping
     public ResponseEntity<ServiceResult> eventTrackingAction(
+            @RequestHeader(value = "jwt", required = false) String jwt,
             @RequestParam(value="eventType") EventTypeEnum eventTypeEnum,
             @RequestBody TrackingActionInputDTO trackingActionInputDTO
     ){
-        return new ResponseEntity<>( trackingActionService.eventTrackingAction(trackingActionInputDTO, eventTypeEnum), HttpStatus.OK);
+        return new ResponseEntity<>( trackingActionService.eventTrackingAction(jwt, trackingActionInputDTO, eventTypeEnum), HttpStatus.OK);
     }
 
 }

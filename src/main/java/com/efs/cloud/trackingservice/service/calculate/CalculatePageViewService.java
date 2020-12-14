@@ -1,11 +1,15 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.repository.calculate.*;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
+import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Local;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +17,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static com.efs.cloud.trackingservice.Global.TRACKING_PAGE_INDEX;
 
 /**
  * Page 计算组合Service
@@ -35,27 +41,28 @@ public class CalculatePageViewService {
     private CalculatePagePathRepository calculatePagePathRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
-
+    @Autowired
+    private ElasticsearchService elasticsearchService;
     /**
      * 统计PageView
      * @param trackingPageViewEntity
      * @return
      */
     public Boolean receiveCalculatePageView(TrackingPageViewEntity trackingPageViewEntity){
-        //判断是否当天多条存在
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         Integer customer = 0;
+        Date currentTime = trackingPageViewEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
         if( trackingPageViewEntity.getCustomerId() > 1 ){
-            List<TrackingPageViewEntity> trackingPageViewEntityListCustomer = trackingPageViewRepository.findByCreateDateAndMerchantIdAndStoreIdAndCustomerId(calendar.getTime(),
+            ElasticComponent.SearchDocumentResponse trackingPageViewEntityCustomerSdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_PAGE_INDEX,currentTime,
                     trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() );
-            if( trackingPageViewEntityListCustomer.size() > 1 ){
+            if( trackingPageViewEntityCustomerSdr.getHits().getTotal() > 1 ){
                 customer = 1;
             }
         }
 
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingPageViewEntity );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
 
         CalculatePageViewEntity calculatePageViewEntity = calculatePageViewRepository.findByDateAndHourAndMerchantIdAndStoreId( currentTime,
                 hour, trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId() );
@@ -103,10 +110,11 @@ public class CalculatePageViewService {
      * @return
      */
     public Boolean receiveCalculateScene(TrackingPageViewEntity trackingPageViewEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingPageViewEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingPageViewEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
 
         CalculatePageSceneEntity calculateMerchantSceneEntity = calculatePageSceneRepository.findByDateAndHourAndMerchantIdAndStoreIdAndScene(
                 currentTime,
@@ -160,10 +168,11 @@ public class CalculatePageViewService {
      * @return
      */
     public Boolean receiveCalculateAction(TrackingPageViewEntity trackingPageViewEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingPageViewEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingPageViewEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
 
         CalculatePageActionEntity calculatePageActionEntity = calculatePageActionRepository.findByDateAndHourAndMerchantIdAndStoreIdAndAction(
             currentTime,
@@ -217,10 +226,11 @@ public class CalculatePageViewService {
      * @return
      */
     public Boolean receiveCalculatePath(TrackingPageViewEntity trackingPageViewEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        Integer union = findUniqueId( trackingPageViewEntity );
-        Date currentTime = calendar.getTime();
-        Integer hour =  calendar.get(Calendar.HOUR_OF_DAY);
+        Date currentTime = trackingPageViewEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
 
         CalculatePagePathEntity calculateMerchantPathEntity = calculatePagePathRepository.findByDateAndHourAndMerchantIdAndStoreIdAndPath(
                 currentTime,
@@ -268,12 +278,11 @@ public class CalculatePageViewService {
         return true;
     }
 
-    private Integer findUniqueId(TrackingPageViewEntity trackingPageViewEntity){
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        List<TrackingPageViewEntity> trackingPageViewEntityList = trackingPageViewRepository.findByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( trackingPageViewEntity.getUniqueId(),
-                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), calendar.getTime() );
+    private Integer findUniqueId(TrackingPageViewEntity trackingPageViewEntity, Date date){
+        ElasticComponent.SearchDocumentResponse trackingPageViewEntitySdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( TRACKING_PAGE_INDEX,trackingPageViewEntity.getUniqueId(),
+                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), date );
         Integer union = 1;
-        if( trackingPageViewEntityList.size() > 1 ){
+        if( trackingPageViewEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
         }
         return union;
