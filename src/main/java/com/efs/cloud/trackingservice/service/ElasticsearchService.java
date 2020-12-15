@@ -80,4 +80,16 @@ public class ElasticsearchService {
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
         return searchDocumentResponse;
     }
+
+    public ElasticComponent.SearchDocumentResponse findByIndexAndCustomerIdAndStatus(String index, Integer customerId){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{");
+        stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
+        stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
+        stringBuilder.append("{\"terms\":{\"status\":[\"").append("WAIT_SELLER_SEND_GOODS,WAIT_BUYER_CONFIRM_GOODS,TRADE_FINISHED").append("\"]}},");
+        stringBuilder.append("]}}}");
+        String body = stringBuilder.toString();
+        ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
+        return searchDocumentResponse;
+    }
 }

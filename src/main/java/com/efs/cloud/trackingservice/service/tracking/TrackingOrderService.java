@@ -41,6 +41,8 @@ public class TrackingOrderService {
     private Boolean isTrackingOrderCategory;
     @Value("${sync.calculate.order_area}")
     private Boolean isTrackingOrderArea;
+    @Value("${sync.calculate.order_customer}")
+    private Boolean isTrackingOrderCustomer;
     @Value("${sync.calculate.order_campaign}")
     private boolean isCalculateCampaign;
     @Autowired
@@ -113,7 +115,7 @@ public class TrackingOrderService {
         if( trackingEventOrderEntityNew != null ){
             //推送ES
             String body = JSON.toJSONString(trackingEventOrderEntityNew);
-            log.info("ES push body:" + body);
+            //log.info("ES push body:" + body);
             elasticComponent.pushDocument(TRACKING_ORDER_INDEX,TRACKING_ORDER_INDEX_TYPE,trackingEventOrderEntityNew.getToId().toString(),body);
 
             //order amount
@@ -134,6 +136,11 @@ public class TrackingOrderService {
             //order area
             if( isTrackingOrderArea ){
                 trackingSenderComponent.sendTracking("sync.order.calculate.order_area", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+            }
+
+            //order customer
+            if( isTrackingOrderCustomer && OrderStatusEnum.PAY_SUCCESS.getValue().equals(trackingEventOrderEntityNew.getStatus())){
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_customer", JSONObject.toJSONString( trackingEventOrderEntityNew ));
             }
 
             //campaign
