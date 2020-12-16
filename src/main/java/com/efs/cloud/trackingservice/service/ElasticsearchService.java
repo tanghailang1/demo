@@ -86,7 +86,7 @@ public class ElasticsearchService {
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
-        stringBuilder.append("{\"terms\":{\"status\":[\"").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("\"]}}");
+        stringBuilder.append("{\"terms\":{\"status\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
