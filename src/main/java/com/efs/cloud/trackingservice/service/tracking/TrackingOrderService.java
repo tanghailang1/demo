@@ -16,12 +16,14 @@ import com.efs.cloud.trackingservice.repository.calculate.CalculateLogRepository
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
 import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.*;
 
 import static com.efs.cloud.trackingservice.Global.*;
@@ -62,8 +64,8 @@ public class TrackingOrderService {
      * @param trackingOrderInputDTO
      * @return
      */
-    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
-        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime())
+    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum) throws ParseException{
+        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()))
                 .jwt(jwt)
                 .orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
         trackingSenderComponent.sendTracking( "sync.order.tracking.order", jsonObject );

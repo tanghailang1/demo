@@ -12,12 +12,14 @@ import com.efs.cloud.trackingservice.enums.EventTypeEnum;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventActionRepository;
 import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -54,9 +56,9 @@ public class TrackingActionService {
      * @param trackingActionInputDTO
      * @return
      */
-    public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum){
+    public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum) throws ParseException {
         String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().time(
-                Calendar.getInstance(Locale.CHINA).getTime()).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
+                DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime())).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
                 .jwt(jwt)
                 .trackingActionInputDTO( trackingActionInputDTO ).build() );
         trackingSenderComponent.sendTracking( "sync.action.tracking.action", jsonObject );
