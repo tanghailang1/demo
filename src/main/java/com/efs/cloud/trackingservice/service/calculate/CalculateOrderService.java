@@ -347,9 +347,13 @@ public class CalculateOrderService {
      */
     public boolean receiveCalculateOrderCustomer(TrackingEventOrderEntity trackingEventOrderEntity){
         Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
-        CalculateOrderCustomerEntity calculateOrderCustomerEntity = calculateOrderCustomerRepository.findByDateAndMerchantIdAndStoreId(
+        CalculateOrderCustomerEntity calculateOrderCustomerEntity = calculateOrderCustomerRepository.findByDateAndHourAndMerchantIdAndStoreId(
                 currentTime,
+                hour,
                 trackingEventOrderEntity.getMerchantId(),
                 trackingEventOrderEntity.getStoreId()
         );
@@ -369,6 +373,7 @@ public class CalculateOrderService {
             CalculateOrderCustomerEntity calculateOrderCustomerEntityExists = CalculateOrderCustomerEntity.builder()
                     .orderCustomerId( calculateOrderCustomerEntity.getOrderCustomerId() )
                     .date( calculateOrderCustomerEntity.getDate() )
+                    .hour(calculateOrderCustomerEntity.getHour())
                     .merchantId( calculateOrderCustomerEntity.getMerchantId() )
                     .storeId( calculateOrderCustomerEntity.getStoreId() )
                     .orderCount( calculateOrderCustomerEntity.getOrderCount() + 1 )
@@ -387,6 +392,7 @@ public class CalculateOrderService {
         }else{
             CalculateOrderCustomerEntity calculateOrderCustomerEntityNew = CalculateOrderCustomerEntity.builder()
                     .date( currentTime )
+                    .hour(hour)
                     .merchantId( trackingEventOrderEntity.getMerchantId() )
                     .storeId( trackingEventOrderEntity.getStoreId() )
                     .orderCount( 1 )

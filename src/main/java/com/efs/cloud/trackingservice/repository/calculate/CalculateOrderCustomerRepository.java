@@ -18,6 +18,6 @@ public interface CalculateOrderCustomerRepository extends JpaRepository<Calculat
      * @param storeId
      * @return
      */
-    CalculateOrderCustomerEntity findByDateAndMerchantIdAndStoreId(Date date,Integer merchantId, Integer storeId);
+    CalculateOrderCustomerEntity findByDateAndHourAndMerchantIdAndStoreId(Date date,Integer hour,Integer merchantId, Integer storeId);
 
 }

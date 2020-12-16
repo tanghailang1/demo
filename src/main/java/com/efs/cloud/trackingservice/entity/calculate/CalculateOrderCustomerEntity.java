@@ -27,6 +27,8 @@ public class CalculateOrderCustomerEntity implements Serializable {
     private Integer orderCustomerId;
     @Temporal(TemporalType.DATE)
     private Date date;
+    @Column(columnDefinition = "smallint")
+    private Integer hour;
     private Integer orderCount;
     private Integer orderAmount;
     private Integer oldCustomerOrderCount;
