@@ -56,7 +56,7 @@ public class TrackingActionService {
      * @param trackingActionInputDTO
      * @return
      */
-    public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum) throws ParseException {
+    public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum) {
         String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().time(
                 DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime())).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
                 .jwt(jwt)

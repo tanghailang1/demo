@@ -64,7 +64,7 @@ public class TrackingOrderService {
      * @param trackingOrderInputDTO
      * @return
      */
-    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum) throws ParseException{
+    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum) {
         String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()))
                 .jwt(jwt)
                 .orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );

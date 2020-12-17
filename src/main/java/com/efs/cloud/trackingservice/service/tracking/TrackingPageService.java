@@ -56,7 +56,7 @@ public class TrackingPageService {
      * @param trackingPageInputDTO
      * @return
      */
-    public ServiceResult pageTrackingView(String jwt, TrackingPageInputDTO trackingPageInputDTO) throws ParseException{
+    public ServiceResult pageTrackingView(String jwt, TrackingPageInputDTO trackingPageInputDTO){
         PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()) )
                 .jwt(jwt)
                 .trackingPageInputDTO( trackingPageInputDTO ).build();

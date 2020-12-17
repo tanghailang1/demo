@@ -58,7 +58,7 @@ public class TrackingCartService {
      * @param trackingCartInputDTO
      * @return
      */
-    public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO) throws ParseException{
+    public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO) {
         CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()) )
                 .jwt(jwt)
                 .trackingCartInputDTO( trackingCartInputDTO ).build();
