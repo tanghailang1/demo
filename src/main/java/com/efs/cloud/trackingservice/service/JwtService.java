@@ -52,7 +52,6 @@ public class JwtService {
             DecodedJWT decodedJWT = verifier.verify(jwt);
             stringClaimMap = decodedJWT.getClaims();
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
         }
         return stringClaimMap;
     }

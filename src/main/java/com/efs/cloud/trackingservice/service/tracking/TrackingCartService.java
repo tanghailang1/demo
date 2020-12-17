@@ -59,7 +59,7 @@ public class TrackingCartService {
      * @return
      */
     public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO) {
-        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()) )
+        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() )
                 .jwt(jwt)
                 .trackingCartInputDTO( trackingCartInputDTO ).build();
         String jsonObject = JSONObject.toJSONString( cartDTOEntity );

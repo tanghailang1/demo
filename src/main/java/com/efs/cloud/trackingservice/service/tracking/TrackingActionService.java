@@ -58,7 +58,7 @@ public class TrackingActionService {
      */
     public ServiceResult eventTrackingAction(String jwt, TrackingActionInputDTO trackingActionInputDTO, EventTypeEnum eventTypeEnum) {
         String jsonObject = JSONObject.toJSONString( ActionDTOEntity.builder().time(
-                DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime())).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
+                Calendar.getInstance(Locale.CHINA).getTime()).type( eventTypeEnum.getValue() ).value( eventTypeEnum.getMessage() )
                 .jwt(jwt)
                 .trackingActionInputDTO( trackingActionInputDTO ).build() );
         trackingSenderComponent.sendTracking( "sync.action.tracking.action", jsonObject );
