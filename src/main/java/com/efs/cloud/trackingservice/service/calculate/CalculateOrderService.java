@@ -10,24 +10,15 @@ import com.efs.cloud.trackingservice.enums.OrderStatusEnum;
 import com.efs.cloud.trackingservice.repository.calculate.*;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingEventOrderRepository;
 import com.efs.cloud.trackingservice.service.ElasticsearchService;
-import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.WebServiceClient;
-import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.record.City;
-import com.maxmind.geoip2.record.Country;
-import com.maxmind.geoip2.record.Subdivision;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.net.InetAddress;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
+import static com.efs.cloud.trackingservice.Global.SALES_ORDER_INDEX;
 import static com.efs.cloud.trackingservice.Global.TRACKING_ORDER_INDEX;
 
 /**
@@ -52,6 +43,8 @@ public class CalculateOrderService {
     private CalculateLogRepository calculateLogRepository;
     @Autowired
     private ElasticsearchService elasticsearchService;
+    @Autowired
+    private CalculateOrderCustomerRepository calculateOrderCustomerRepository;
     /**
      * 统计渠道订单金额
      * @param trackingEventOrderEntity
@@ -340,6 +333,79 @@ public class CalculateOrderService {
             if( isSave == null  ) {
                 calculateLogRepository.saveAndFlush(
                         CalculateLogEntity.builder().type("calculate_order_area").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime(currentTime).build()
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 统计Order新老客购买情况
+     * @param trackingEventOrderEntity
+     * @return
+     */
+    public boolean receiveCalculateOrderCustomer(TrackingEventOrderEntity trackingEventOrderEntity){
+        Date currentTime = trackingEventOrderEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        CalculateOrderCustomerEntity calculateOrderCustomerEntity = calculateOrderCustomerRepository.findByDateAndHourAndMerchantIdAndStoreId(
+                currentTime,
+                hour,
+                trackingEventOrderEntity.getMerchantId(),
+                trackingEventOrderEntity.getStoreId()
+        );
+        Integer oldCustomerOrderCount = 0;
+        Integer oldCustomerOrderAmount = 0;
+        Integer newCustomerOrderCount = 0;
+        Integer newCustomerOrderAmount = 0;
+        ElasticComponent.SearchDocumentResponse cloudOrderSdr = elasticsearchService.findByIndexAndCustomerIdAndStatus(SALES_ORDER_INDEX,trackingEventOrderEntity.getCustomerId());
+        if (cloudOrderSdr.getHits().getTotal() > 0) {
+            oldCustomerOrderCount = 1;
+            oldCustomerOrderAmount = trackingEventOrderEntity.getOrderAmount();
+        }else {
+            newCustomerOrderCount = 1;
+            newCustomerOrderAmount = trackingEventOrderEntity.getOrderAmount();
+        }
+        if (calculateOrderCustomerEntity != null) {
+            CalculateOrderCustomerEntity calculateOrderCustomerEntityExists = CalculateOrderCustomerEntity.builder()
+                    .orderCustomerId( calculateOrderCustomerEntity.getOrderCustomerId() )
+                    .date( calculateOrderCustomerEntity.getDate() )
+                    .hour(calculateOrderCustomerEntity.getHour())
+                    .merchantId( calculateOrderCustomerEntity.getMerchantId() )
+                    .storeId( calculateOrderCustomerEntity.getStoreId() )
+                    .orderCount( calculateOrderCustomerEntity.getOrderCount() + 1 )
+                    .orderAmount( calculateOrderCustomerEntity.getOrderAmount() + trackingEventOrderEntity.getOrderAmount() )
+                    .oldCustomerOrderCount( calculateOrderCustomerEntity.getOldCustomerOrderCount() + oldCustomerOrderCount )
+                    .oldCustomerOrderAmount( calculateOrderCustomerEntity.getOldCustomerOrderAmount() + oldCustomerOrderAmount )
+                    .newCustomerOrderCount( calculateOrderCustomerEntity.getNewCustomerOrderCount() + newCustomerOrderCount )
+                    .newCustomerOrderAmount( calculateOrderCustomerEntity.getNewCustomerOrderAmount() + newCustomerOrderAmount)
+                    .build();
+            CalculateOrderCustomerEntity isSave = calculateOrderCustomerRepository.saveAndFlush( calculateOrderCustomerEntityExists );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_order_customer").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
+                );
+            }
+        }else{
+            CalculateOrderCustomerEntity calculateOrderCustomerEntityNew = CalculateOrderCustomerEntity.builder()
+                    .date( currentTime )
+                    .hour(hour)
+                    .merchantId( trackingEventOrderEntity.getMerchantId() )
+                    .storeId( trackingEventOrderEntity.getStoreId() )
+                    .orderCount( 1 )
+                    .orderAmount( trackingEventOrderEntity.getOrderAmount() )
+                    .oldCustomerOrderCount(oldCustomerOrderCount )
+                    .oldCustomerOrderAmount(oldCustomerOrderAmount )
+                    .newCustomerOrderCount( newCustomerOrderCount )
+                    .newCustomerOrderAmount(newCustomerOrderAmount)
+                    .build();
+            CalculateOrderCustomerEntity isSave = calculateOrderCustomerRepository.saveAndFlush( calculateOrderCustomerEntityNew );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_order_customer").content(JSONObject.toJSONString(trackingEventOrderEntity)).createTime( currentTime ).build()
                 );
             }
         }

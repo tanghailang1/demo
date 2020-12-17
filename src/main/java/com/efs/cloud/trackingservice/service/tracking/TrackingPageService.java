@@ -11,11 +11,13 @@ import com.efs.cloud.trackingservice.entity.tracking.TrackingPageViewEntity;
 import com.efs.cloud.trackingservice.repository.tracking.TrackingPageViewRepository;
 import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.*;
 
 import static com.efs.cloud.trackingservice.Global.*;
@@ -55,7 +57,7 @@ public class TrackingPageService {
      * @return
      */
     public ServiceResult pageTrackingView(String jwt, TrackingPageInputDTO trackingPageInputDTO){
-        PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() )
+        PageViewDTOEntity pageViewDTOEntity = PageViewDTOEntity.builder().time( DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()) )
                 .jwt(jwt)
                 .trackingPageInputDTO( trackingPageInputDTO ).build();
         String jsonObject = JSONObject.toJSONString( pageViewDTOEntity );
@@ -90,8 +92,8 @@ public class TrackingPageService {
                 .campaign( trackingPageInputDTO.getCampaign() )
                 .merchantId( trackingPageInputDTO.getMerchantId() )
                 .storeId( trackingPageInputDTO.getStoreId() )
-                .model( trackingPageInputDTO.getModel() )
-                .size( trackingPageInputDTO.getSize() )
+                .model( trackingPageInputDTO.getModel() != null? trackingPageInputDTO.getModel():"***" )
+                .size( trackingPageInputDTO.getSize() != null? trackingPageInputDTO.getSize():"***" )
                 .data( DataConvertUtil.objectConvertJson(trackingPageInputDTO.getData()) )
                 .createTime( pageViewDTOEntity.getTime() )
                 .createDate( pageViewDTOEntity.getTime() )

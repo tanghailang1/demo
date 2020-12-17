@@ -63,13 +63,13 @@ public class IPUtils {
                 return city.getNames().get("zh-CN");
             }else if(subdivision.getNames().get("zh-CN") != null){
                 return subdivision.getNames().get("zh-CN");
-            }else {
+            }else if(country.getNames().get("zh-CN") != null){
                 return country.getNames().get("zh-CN");
             }
         } catch (Exception e) {
             log.error("ip获取城市error:" + ip + "," + e.getMessage());
         }
-        return "";
+        return "未知";
     }
 
     /**

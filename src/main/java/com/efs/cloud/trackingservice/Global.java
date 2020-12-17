@@ -17,6 +17,7 @@ public class Global {
     public static final String TRACKING_CART_INDEX = "cloud_tracking_cart";
     public static final String TRACKING_ORDER_INDEX = "cloud_tracking_order";
     public static final String TRACKING_PAGE_INDEX = "cloud_tracking_page";
+    public static final String SALES_ORDER_INDEX = "cloud_sales_order";
 
     public static final String TRACKING_ACTION_INDEX_TYPE = "cloud_tracking_action_type";
     public static final String TRACKING_CART_INDEX_TYPE = "cloud_tracking_cart_type";

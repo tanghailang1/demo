@@ -89,6 +89,15 @@ public class TrackingOrderReceiverComponent {
                         channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
                     }
                     break;
+                case "sync.order.calculate.order_customer":
+                    TrackingEventOrderEntity trackingEventOrderCustomerEntity = JSON.parseObject(body, TrackingEventOrderEntity.class);
+                    Boolean isCalCustomerAck = calculateOrderService.receiveCalculateOrderCustomer( trackingEventOrderCustomerEntity );
+                    if( isCalCustomerAck ){
+                        channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                    }else{
+                        channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+                    }
+                    break;
                 case "sync.order.calculate.campaign_order":
                     TrackingEventOrderEntity trackingEventOrderCampaignEntity = JSON.parseObject(body, TrackingEventOrderEntity.class);
                     Boolean isCalShareAckCampaign = calculateCampaignService.receiveCalculateCampaignOrder( trackingEventOrderCampaignEntity );

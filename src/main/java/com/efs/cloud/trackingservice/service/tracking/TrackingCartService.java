@@ -17,11 +17,13 @@ import com.efs.cloud.trackingservice.repository.tracking.TrackingEventCartReposi
 import com.efs.cloud.trackingservice.service.ElasticsearchService;
 import com.efs.cloud.trackingservice.service.JwtService;
 import com.efs.cloud.trackingservice.util.DataConvertUtil;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -56,8 +58,8 @@ public class TrackingCartService {
      * @param trackingCartInputDTO
      * @return
      */
-    public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO){
-        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( Calendar.getInstance(Locale.CHINA).getTime() )
+    public ServiceResult eventTrackingCart(String jwt, TrackingCartInputDTO trackingCartInputDTO) {
+        CartDTOEntity cartDTOEntity = CartDTOEntity.builder().time( DateUtil.getStringGMT8Time(Calendar.getInstance(Locale.CHINA).getTime()) )
                 .jwt(jwt)
                 .trackingCartInputDTO( trackingCartInputDTO ).build();
         String jsonObject = JSONObject.toJSONString( cartDTOEntity );
