@@ -64,10 +64,8 @@ public class TrackingOrderService {
      * @param trackingOrderInputDTO
      * @return
      */
-    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum) {
-        Calendar calendar = Calendar.getInstance(Locale.CHINA);
-        calendar.setTimeZone(TimeZone.getTimeZone("GMT+8"));
-        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(calendar.getTime())
+    public ServiceResult eventTrackingOrder(String jwt,TrackingOrderInputDTO trackingOrderInputDTO, OrderStatusEnum orderStatusEnum){
+        String jsonObject = JSONObject.toJSONString( OrderDTOEntity.builder().time(Calendar.getInstance(Locale.CHINA).getTime())
                 .jwt(jwt)
                 .orderStatus(orderStatusEnum.getValue()).trackingOrderInputDTO(trackingOrderInputDTO).build() );
         trackingSenderComponent.sendTracking( "sync.order.tracking.order", jsonObject );

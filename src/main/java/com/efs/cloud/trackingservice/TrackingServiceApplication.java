@@ -12,7 +12,7 @@ import java.util.TimeZone;
 public class TrackingServiceApplication {
 
 	public static void main(String[] args) {
-		TimeZone.getTimeZone("GMT+8");
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
 		SpringApplication.run(TrackingServiceApplication.class, args);
 	}
 
