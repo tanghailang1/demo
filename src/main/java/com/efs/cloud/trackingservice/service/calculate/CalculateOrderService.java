@@ -1,7 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
-import com.efs.cloud.trackingservice.IPUtils;
+import com.efs.cloud.trackingservice.util.IPUtils;
 import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
 import com.efs.cloud.trackingservice.entity.entity.OrderItemDTOEntity;
