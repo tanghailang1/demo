@@ -51,7 +51,7 @@ public class OrderComparisonService {
     @Autowired
     private TrackingOrderService trackingOrderService;
 
-    @Scheduled(cron = "0 0 1 * * ?")
+    @Scheduled(cron = "0 0 10 * * ?")
     public void OrderComparisonDaily(){
         try {
             if (isOrderComparisonDaily) {
