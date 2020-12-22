@@ -1,4 +1,4 @@
-package com.efs.cloud.trackingservice;
+package com.efs.cloud.trackingservice.util;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
@@ -30,8 +30,6 @@ public class IPUtils {
         File database = null;
 
         try {
-            //绝对路径读取文件方式
-            //database = new File("F:\\IDEA project\\my_demo\\src\\main\\resources\\GeoLite2-City.mmdb");
 
             // 通过 InputStream 流式读取文件，解决无法通过File方式读取jar包内的文件的问题
             database = getFile("GeoLite2-City.mmdb","geolite2.mmdb");

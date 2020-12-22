@@ -65,4 +65,6 @@ public interface TrackingEventOrderRepository extends JpaRepository<TrackingEven
      */
     @Query(value="select * from tracking_event_order where JSON_CONTAINS(order_items,JSON_OBJECT('categoryId', ?1)) and merchant_id = ?2 and store_id = ?3 and create_date = ?4", nativeQuery = true)
     List<TrackingEventOrderEntity> findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(Integer id, Integer merchantId, Integer storeId, String createDate);
+
+    TrackingEventOrderEntity findAllByOrderIdAndStatus(String orderId,String status);
 }
