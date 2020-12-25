@@ -37,6 +37,9 @@ public class CalculateActionPdpItemEntity implements Serializable {
     private Integer uvCount;
     private Integer merchantId;
     private Integer storeId;
+    private Integer itemCartCount;
+    private Integer customerCartCount;
+    private Integer customerOrderCount;
     private Integer itemOrderCount;
     private Integer itemAmount;
 }
