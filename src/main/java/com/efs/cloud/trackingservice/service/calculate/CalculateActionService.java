@@ -43,6 +43,8 @@ public class CalculateActionService {
     private CalculateActionPdpItemRepository calculateActionPdpItemRepository;
     @Autowired
     private CalculateOrderItemRepository calculateOrderItemRepository;
+    @Autowired
+    private CalculateCartItemRepository calculateCartItemRepository;
 
     /**
      * Action基础计算
@@ -161,6 +163,9 @@ public class CalculateActionService {
         Integer union = findUniqueId( trackingEventActionEntity, currentTime );
         Integer itemAmount = 0;
         Integer itemOrderCount = 0;
+        Integer customerOrderCount = 0;
+        Integer itemCartCount = 0;
+        Integer customerCartCount = 0;
         JSONObject valueJson = JSONObject.parseObject(trackingEventActionEntity.getEventValue());
         String itemId = valueJson.getString("itemId");
         CalculateOrderItemEntity calculateOrderItemEntity = calculateOrderItemRepository.findByItemIdAndSceneAndMerchantIdAndStoreIdAndDateAndHourAndStatus(
@@ -172,11 +177,22 @@ public class CalculateActionService {
                 hour,
                 "PAY_SUCCESS"
         );
+        CalculateCartItemEntity calculateCartItemEntity = calculateCartItemRepository.findByItemIdAndDateAndHourAndMerchantIdAndStoreId(
+                Integer.parseInt(itemId),
+                currentTime,
+                hour,
+                trackingEventActionEntity.getMerchantId(),
+                trackingEventActionEntity.getStoreId()
+        );
         if (calculateOrderItemEntity != null){
             itemAmount = calculateOrderItemEntity.getItemAmount();
             itemOrderCount = calculateOrderItemEntity.getItemOrderCount();
+            customerOrderCount = calculateOrderItemEntity.getCustomerCount();
         }
-
+        if (calculateCartItemEntity != null){
+            itemCartCount = calculateCartItemEntity.getItemCartCount();
+            customerCartCount = calculateCartItemEntity.getCustomerCount();
+        }
         CalculateActionPdpItemEntity calculateActionPdpItemEntity = calculateActionPdpItemRepository.findByDateAndHourAndMerchantIdAndStoreIdAndItemIdAndCampaignName(
                 currentTime,
                 hour,
@@ -192,6 +208,9 @@ public class CalculateActionService {
                     .hour( hour )
                     .merchantId( calculateActionPdpItemEntity.getMerchantId() )
                     .campaignName(calculateActionPdpItemEntity.getCampaignName())
+                    .itemCartCount(itemCartCount)
+                    .customerCartCount(customerCartCount)
+                    .customerOrderCount(customerOrderCount)
                     .itemAmount(itemAmount)
                     .itemOrderCount(itemOrderCount)
                     .storeId( calculateActionPdpItemEntity.getStoreId() )
@@ -220,6 +239,9 @@ public class CalculateActionService {
                     .imageSrc(valueJson.getString("imageSrc"))
                     .pvCount( 1 )
                     .uvCount( 1 )
+                    .itemCartCount(itemCartCount)
+                    .customerCartCount(customerCartCount)
+                    .customerOrderCount(customerOrderCount)
                     .itemAmount(itemAmount)
                     .itemOrderCount(itemOrderCount)
                     .build();
