@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.UUID;
 
 import static com.efs.cloud.trackingservice.Global.*;
 
@@ -99,25 +100,25 @@ public class TrackingCartService {
                 .createDate( cartDTOEntity.getTime() )
                 .createTime( cartDTOEntity.getTime() )
                 .build();
-        TrackingEventCartEntity trackingEventCartEntityNew = trackingEventCartRepository.saveAndFlush( trackingEventCartEntity );
-        if( trackingEventCartEntityNew != null ){
+        String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        if( trackingEventCartEntity != null ){
             //推送ES
-            String body = JSON.toJSONString(trackingEventCartEntityNew);
-            elasticComponent.pushDocument(TRACKING_CART_INDEX,TRACKING_CART_INDEX_TYPE,trackingEventCartEntityNew.getTcId().toString(),body);
+            String body = JSON.toJSONString(trackingEventCartEntity);
+            elasticComponent.pushDocument(TRACKING_CART_INDEX,TRACKING_CART_INDEX_TYPE,uuid,body);
 
             //cart item
             if( isTrackingCartItem ){
-                trackingSenderComponent.sendTracking("sync.cart.calculate.cart_item", JSONObject.toJSONString( trackingEventCartEntityNew ));
+                trackingSenderComponent.sendTracking("sync.cart.calculate.cart_item", JSONObject.toJSONString( trackingEventCartEntity ));
             }
 
             //cart sku
             if( isTrackingCartSku ){
-                trackingSenderComponent.sendTracking("sync.cart.calculate.cart_sku", JSONObject.toJSONString( trackingEventCartEntityNew ));
+                trackingSenderComponent.sendTracking("sync.cart.calculate.cart_sku", JSONObject.toJSONString( trackingEventCartEntity ));
             }
 
             //campaign
             if( isCalculateCampaign && !"".equals(trackingCartInputDTO.getCampaign()) ){
-                trackingSenderComponent.sendTracking( "sync.cart.calculate.campaign_cart", JSONObject.toJSONString( trackingCartInputDTO ) );
+                trackingSenderComponent.sendTracking( "sync.cart.calculate.campaign_cart", JSONObject.toJSONString( trackingEventCartEntity ) );
             }
             return true;
         }else{

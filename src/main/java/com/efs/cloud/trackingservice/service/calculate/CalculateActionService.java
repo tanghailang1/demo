@@ -34,6 +34,8 @@ public class CalculateActionService {
     @Autowired
     private CalculateActionSearchRepository calculateActionSearchRepository;
     @Autowired
+    private CalculateActionCmsRepository calculateActionCmsRepository;
+    @Autowired
     private CalculateActionShareRepository calculateActionShareRepository;
     @Autowired
     private CalculateLogRepository calculateLogRepository;
@@ -144,6 +146,67 @@ public class CalculateActionService {
             if( isSave == null ){
                 calculateLogRepository.saveAndFlush(
                     CalculateLogEntity.builder().type("calculate_action_search").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
+                );
+            }
+        }
+        return true;
+    }
+
+    /**
+     * ActionCMS点击统计
+     * @param trackingEventActionEntity
+     * @return
+     */
+    public Boolean receiveCalculateActionCms(TrackingEventActionEntity trackingEventActionEntity){
+        Date currentTime = trackingEventActionEntity.getCreateTime();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime( currentTime );
+        Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        JSONObject valueJson = JSONObject.parseObject(trackingEventActionEntity.getEventValue());
+
+        String handleName = valueJson.getString("handleName");
+        String index = "";
+        if (valueJson.containsKey("index")){
+            index = valueJson.getString("index");
+        }
+        CalculateActionCmsEntity calculateActionCmsEntity = calculateActionCmsRepository.findByDateAndHourAndMerchantIdAndStoreIdAndHandleNameAndCmsIndex(
+                currentTime,hour, trackingEventActionEntity.getMerchantId(),
+                trackingEventActionEntity.getStoreId(),handleName,index
+        );
+        if (calculateActionCmsEntity != null) {
+            CalculateActionCmsEntity calculateActionCmsEntityExists = CalculateActionCmsEntity.builder()
+                    .cmsId( calculateActionCmsEntity.getCmsId() )
+                    .date( currentTime )
+                    .hour( hour )
+                    .merchantId( calculateActionCmsEntity.getMerchantId() )
+                    .storeId( calculateActionCmsEntity.getStoreId() )
+                    .pvCount( calculateActionCmsEntity.getPvCount() + 1)
+                    .uvCount( calculateActionCmsEntity.getUvCount() + union )
+                    .handleName( calculateActionCmsEntity.getHandleName() )
+                    .cmsIndex(calculateActionCmsEntity.getCmsIndex())
+                    .build();
+            CalculateActionCmsEntity isSave = calculateActionCmsRepository.saveAndFlush( calculateActionCmsEntityExists );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_action_search").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
+                );
+            }
+        }else{
+            CalculateActionCmsEntity calculateActionCmsEntityNew = CalculateActionCmsEntity.builder()
+                    .date( currentTime )
+                    .hour( hour )
+                    .merchantId( trackingEventActionEntity.getMerchantId() )
+                    .storeId( trackingEventActionEntity.getStoreId() )
+                    .handleName( handleName )
+                    .cmsIndex(index)
+                    .pvCount( 1 )
+                    .uvCount( 1 )
+                    .build();
+            CalculateActionCmsEntity isSave = calculateActionCmsRepository.saveAndFlush( calculateActionCmsEntityNew );
+            if( isSave == null ){
+                calculateLogRepository.saveAndFlush(
+                        CalculateLogEntity.builder().type("calculate_action_cms").content(JSONObject.toJSONString(trackingEventActionEntity)).createTime( currentTime ).build()
                 );
             }
         }

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.UUID;
 
 import static com.efs.cloud.trackingservice.Global.*;
 
@@ -39,6 +40,8 @@ public class TrackingActionService {
     private Boolean isCalculateActionSearch;
     @Value("${sync.calculate.action_share}")
     private Boolean isCalculateActionShare;
+    @Value("${sync.calculate.action_cms}")
+    private Boolean isCalculateActionCms;
     @Value("${sync.calculate.action_pdp_item}")
     private Boolean isCalculateActionPdpItem;
     @Autowired
@@ -87,37 +90,44 @@ public class TrackingActionService {
                 .data( DataConvertUtil.objectConvertJson(trackingActionInputDTO.getData()) )
                 .createDate( actionDTOEntity.getTime() )
                 .createTime( actionDTOEntity.getTime() ).build();
-        TrackingEventActionEntity trackingActionEntityNew = trackingEventActionRepository.saveAndFlush( trackingEventActionEntity );
 
-        if( trackingActionEntityNew != null ){
+        String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        if( trackingEventActionEntity != null ){
             //推送ES
-            String body = JSON.toJSONString(trackingActionEntityNew);
-            elasticComponent.pushDocument(TRACKING_ACTION_INDEX,TRACKING_ACTION_INDEX_TYPE,trackingActionEntityNew.getTaId().toString(),body);
+            String body = JSON.toJSONString(trackingEventActionEntity);
+            elasticComponent.pushDocument(TRACKING_ACTION_INDEX,TRACKING_ACTION_INDEX_TYPE,uuid,body);
 
             //action
             if( isCalculateAction ){
-                trackingSenderComponent.sendTracking("sync.action.calculate.action", JSONObject.toJSONString( trackingActionEntityNew ));
+                trackingSenderComponent.sendTracking("sync.action.calculate.action", JSONObject.toJSONString( trackingEventActionEntity ));
             }
 
             //action search
             if( isCalculateActionSearch ){
-                if( trackingActionEntityNew.getEventType().equals(EventTypeEnum.SEARCH.getValue()) ){
-                    trackingSenderComponent.sendTracking("sync.action.calculate.action_search", JSONObject.toJSONString( trackingActionEntityNew ));
+                if( trackingEventActionEntity.getEventType().equals(EventTypeEnum.SEARCH.getValue()) ){
+                    trackingSenderComponent.sendTracking("sync.action.calculate.action_search", JSONObject.toJSONString( trackingEventActionEntity ));
                 }
             }
 
             //action pdp_item
             if( isCalculateActionPdpItem ){
-                if( trackingActionEntityNew.getEventType().equals(EventTypeEnum.PDP_ITEM.getValue()) ){
-                    trackingSenderComponent.sendTracking("sync.action.calculate.action_pdp_item", JSONObject.toJSONString( trackingActionEntityNew ));
+                if( trackingEventActionEntity.getEventType().equals(EventTypeEnum.PDP_ITEM.getValue()) ){
+                    trackingSenderComponent.sendTracking("sync.action.calculate.action_pdp_item", JSONObject.toJSONString( trackingEventActionEntity ));
                 }
             }
 
             //action share
             if( isCalculateActionShare ){
-                if( trackingActionEntityNew.getEventType().equals(EventTypeEnum.SHARE_CARD.getValue()) ||
-                    trackingActionEntityNew.getEventType().equals(EventTypeEnum.SHARE_PLAYBILL.getValue())) {
-                    trackingSenderComponent.sendTracking("sync.action.calculate.action_share", JSONObject.toJSONString(trackingActionEntityNew));
+                if( trackingEventActionEntity.getEventType().equals(EventTypeEnum.SHARE_CARD.getValue()) ||
+                        trackingEventActionEntity.getEventType().equals(EventTypeEnum.SHARE_PLAYBILL.getValue())) {
+                    trackingSenderComponent.sendTracking("sync.action.calculate.action_share", JSONObject.toJSONString(trackingEventActionEntity));
+                }
+            }
+
+            //action cms
+            if( isCalculateActionCms ){
+                if( trackingEventActionEntity.getEventType().equals(EventTypeEnum.CLICK_CMS.getValue())) {
+                    trackingSenderComponent.sendTracking("sync.action.calculate.action_cms", JSONObject.toJSONString(trackingEventActionEntity));
                 }
             }
             return true;

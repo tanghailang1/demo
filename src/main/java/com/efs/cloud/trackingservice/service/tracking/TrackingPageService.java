@@ -98,36 +98,35 @@ public class TrackingPageService {
                 .createTime( pageViewDTOEntity.getTime() )
                 .createDate( pageViewDTOEntity.getTime() )
                 .build();
-
-        TrackingPageViewEntity trackingPageViewEntityNew = trackingPageViewRepository.saveAndFlush( trackingPageViewEntity );
-        if( trackingPageViewEntityNew.getTId() != null ){
+        String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        if( trackingPageViewEntity.getTId() != null ){
             //推送ES
-            String body = JSON.toJSONString(trackingPageViewEntityNew);
-            elasticComponent.pushDocument(TRACKING_PAGE_INDEX,TRACKING_PAGE_INDEX_TYPE,trackingPageViewEntityNew.getTId().toString(),body);
+            String body = JSON.toJSONString(trackingPageViewEntity);
+            elasticComponent.pushDocument(TRACKING_PAGE_INDEX,TRACKING_PAGE_INDEX_TYPE,uuid,body);
 
             //page view
             if( isCalculatePageTracking ){
-                trackingSenderComponent.sendTracking( "sync.page.calculate.page", JSONObject.toJSONString( trackingPageViewEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.page.calculate.page", JSONObject.toJSONString( trackingPageViewEntity ) );
             }
 
             //scene
             if( isCalculateSceneTracking ){
-                trackingSenderComponent.sendTracking( "sync.page.calculate.page_scene", JSONObject.toJSONString( trackingPageViewEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.page.calculate.page_scene", JSONObject.toJSONString( trackingPageViewEntity ) );
             }
 
             //title
             if( isCalculateActionTracking ){
-                trackingSenderComponent.sendTracking( "sync.page.calculate.page_action", JSONObject.toJSONString( trackingPageViewEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.page.calculate.page_action", JSONObject.toJSONString( trackingPageViewEntity ) );
             }
 
             //path
             if( isCalculatePathTracking ){
-                trackingSenderComponent.sendTracking( "sync.page.calculate.page_path", JSONObject.toJSONString( trackingPageViewEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.page.calculate.page_path", JSONObject.toJSONString( trackingPageViewEntity ) );
             }
 
             //campaign
             if( isCalculateCampaign && trackingPageInputDTO.getCampaign() != null && !"".equals(trackingPageInputDTO.getCampaign()) ){
-                trackingSenderComponent.sendTracking( "sync.page.calculate.campaign_page", JSONObject.toJSONString( trackingPageViewEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.page.calculate.campaign_page", JSONObject.toJSONString( trackingPageViewEntity ) );
             }
 
             return true;

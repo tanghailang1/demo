@@ -115,41 +115,41 @@ public class TrackingOrderService {
                 .createDate( orderDTOEntity.getTime() )
                 .createTime( orderDTOEntity.getTime() )
                 .build();
-        TrackingEventOrderEntity trackingEventOrderEntityNew = trackingEventOrderRepository.saveAndFlush( trackingEventOrderEntity );
-        if( trackingEventOrderEntityNew != null ){
+        String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        if( trackingEventOrderEntity != null ){
             //推送ES
-            String body = JSON.toJSONString(trackingEventOrderEntityNew);
+            String body = JSON.toJSONString(trackingEventOrderEntity);
             //log.info("ES push body:" + body);
-            elasticComponent.pushDocument(TRACKING_ORDER_INDEX,TRACKING_ORDER_INDEX_TYPE,trackingEventOrderEntityNew.getToId().toString(),body);
+            elasticComponent.pushDocument(TRACKING_ORDER_INDEX,TRACKING_ORDER_INDEX_TYPE,uuid,body);
 
             //order amount
             if( isTrackingOrderAmount ){
-                trackingSenderComponent.sendTracking("sync.order.calculate.order_amount", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_amount", JSONObject.toJSONString( trackingEventOrderEntity ));
             }
 
             //order item
             if( isTrackingOrderItem ){
-                trackingSenderComponent.sendTracking("sync.order.calculate.order_item", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_item", JSONObject.toJSONString( trackingEventOrderEntity ));
             }
 
             //order category
             if( isTrackingOrderCategory ){
-                trackingSenderComponent.sendTracking("sync.order.calculate.order_category", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_category", JSONObject.toJSONString( trackingEventOrderEntity ));
             }
 
             //order area
             if( isTrackingOrderArea ){
-                trackingSenderComponent.sendTracking("sync.order.calculate.order_area", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_area", JSONObject.toJSONString( trackingEventOrderEntity ));
             }
 
             //order customer
-            if( isTrackingOrderCustomer && OrderStatusEnum.PAY_SUCCESS.getValue().equals(trackingEventOrderEntityNew.getStatus())){
-                trackingSenderComponent.sendTracking("sync.order.calculate.order_customer", JSONObject.toJSONString( trackingEventOrderEntityNew ));
+            if( isTrackingOrderCustomer && OrderStatusEnum.PAY_SUCCESS.getValue().equals(trackingEventOrderEntity.getStatus())){
+                trackingSenderComponent.sendTracking("sync.order.calculate.order_customer", JSONObject.toJSONString( trackingEventOrderEntity ));
             }
 
             //campaign
             if( isCalculateCampaign && !"".equals(trackingOrderInputDTO.getCampaign()) ){
-                trackingSenderComponent.sendTracking( "sync.order.calculate.campaign_order", JSONObject.toJSONString( trackingEventOrderEntityNew ) );
+                trackingSenderComponent.sendTracking( "sync.order.calculate.campaign_order", JSONObject.toJSONString( trackingEventOrderEntity ) );
             }
             return true;
         }else{
