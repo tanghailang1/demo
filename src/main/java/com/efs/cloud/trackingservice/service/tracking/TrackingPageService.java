@@ -99,7 +99,7 @@ public class TrackingPageService {
                 .createDate( pageViewDTOEntity.getTime() )
                 .build();
         String uuid = UUID.randomUUID().toString().replaceAll("-","");
-        if( trackingPageViewEntity.getTId() != null ){
+        if( trackingPageViewEntity != null ){
             //推送ES
             String body = JSON.toJSONString(trackingPageViewEntity);
             elasticComponent.pushDocument(TRACKING_PAGE_INDEX,TRACKING_PAGE_INDEX_TYPE,uuid,body);
