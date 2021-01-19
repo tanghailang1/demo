@@ -19,13 +19,35 @@ public class ElasticsearchService {
     @Autowired
     private ElasticComponent elasticComponent;
 
-    public ElasticComponent.SearchDocumentResponse findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate(String index, String uniqueId, Integer merchantId, Integer storeId, Date createDate) {
+    public ElasticComponent.SearchDocumentResponse findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate(String index, String uniqueId, Integer merchantId, Integer storeId, Date createDate,String field,String fieldValue) {
         StringBuilder stringBuilder = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"merchantId\":\"").append(merchantId).append("\"}},");
         stringBuilder.append("{\"term\":{\"storeId\":\"").append(storeId).append("\"}},");
+        switch (field){
+            case "scene":
+                stringBuilder.append("{\"term\":{\"scene\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "action":
+                stringBuilder.append("{\"term\":{\"action\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "path":
+                stringBuilder.append("{\"term\":{\"path\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "eventType":
+                stringBuilder.append("{\"term\":{\"eventType\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "eventValue":
+                stringBuilder.append("{\"term\":{\"eventValue\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "eventMessage":
+                stringBuilder.append("{\"term\":{\"eventMessage\":\"").append(fieldValue).append("\"}},");
+                break;
+            default:
+                break;
+        }
         stringBuilder.append("{\"term\":{\"uniqueId\":\"").append(uniqueId).append("\"}},");
         stringBuilder.append("{\"term\":{\"createDate\":\"").append(sdf.format(createDate)).append("\"}}");
         stringBuilder.append("]}}}");
@@ -35,13 +57,29 @@ public class ElasticsearchService {
         return searchDocumentResponse;
     }
 
-    public ElasticComponent.SearchDocumentResponse findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(String index, Date createDate, Integer merchantId, Integer storeId, Integer customerId) {
+    public ElasticComponent.SearchDocumentResponse findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(String index, Date createDate, Integer merchantId, Integer storeId, Integer customerId,String field,String fieldValue) {
         StringBuilder stringBuilder = new StringBuilder();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"merchantId\":\"").append(merchantId).append("\"}},");
         stringBuilder.append("{\"term\":{\"storeId\":\"").append(storeId).append("\"}},");
+        switch (field){
+            case "itemId":
+                stringBuilder.append("{\"term\":{\"itemId\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "skuCode":
+                stringBuilder.append("{\"term\":{\"skuCode\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "categoryId":
+                stringBuilder.append("{\"term\":{\"categoryId\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "scene":
+                stringBuilder.append("{\"term\":{\"scene\":\"").append(fieldValue).append("\"}},");
+                break;
+            default:
+                break;
+        }
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
         stringBuilder.append("{\"term\":{\"createDate\":\"").append(sdf.format(createDate)).append("\"}}");
         stringBuilder.append("]}}}");

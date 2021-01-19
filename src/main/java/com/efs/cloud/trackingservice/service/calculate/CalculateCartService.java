@@ -50,7 +50,7 @@ public class CalculateCartService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime ,"itemId",trackingEventCartEntity.getItemId().toString());
 
         CalculateCartItemEntity calculateCartItemEntity = calculateCartItemRepository.findByItemIdAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getItemId(), currentTime,
@@ -83,7 +83,7 @@ public class CalculateCartService {
                     .merchantId( trackingEventCartEntity.getMerchantId() )
                     .storeId( trackingEventCartEntity.getStoreId() )
                     .itemCartCount( 1 )
-                    .customerCount( 1 )
+                    .customerCount( union )
                     .build();
             CalculateCartItemEntity isSave = calculateCartItemRepository.saveAndFlush( calculateCartItemEntityNew );
             if( isSave == null ){
@@ -106,7 +106,7 @@ public class CalculateCartService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findCustomerId( trackingEventCartEntity, currentTime );
+        Integer union = findCustomerId( trackingEventCartEntity, currentTime ,"skuCode",trackingEventCartEntity.getSkuCode());
 
         CalculateCartSkuEntity calculateCartSkuEntity = calculateCartSkuRepository.findBySkuCodeAndDateAndHourAndMerchantIdAndStoreId(
                 trackingEventCartEntity.getSkuCode(), currentTime,
@@ -141,7 +141,7 @@ public class CalculateCartService {
                     .merchantId( trackingEventCartEntity.getMerchantId() )
                     .storeId( trackingEventCartEntity.getStoreId() )
                     .skuCartCount( 1 )
-                    .customerCount( 1 )
+                    .customerCount( union )
                     .build();
             CalculateCartSkuEntity isSave = calculateCartSkuRepository.saveAndFlush( calculateCartSkuEntityNew );
             if( isSave == null ){
@@ -154,9 +154,9 @@ public class CalculateCartService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity, Date date){
+    private Integer findCustomerId(TrackingEventCartEntity trackingEventCartEntity, Date date,String field,String fieldValue){
         ElasticComponent.SearchDocumentResponse trackingEventCartEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_CART_INDEX, date,
-                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(),trackingEventCartEntity.getCustomerId() );
+                trackingEventCartEntity.getMerchantId(), trackingEventCartEntity.getStoreId(),trackingEventCartEntity.getCustomerId(),field,fieldValue );
         Integer union = 1;
         if( trackingEventCartEntitySdr.getHits().getTotal() > 1 ){
             union = 0;

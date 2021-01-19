@@ -58,7 +58,7 @@ public class CalculateActionService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime ,"eventType",trackingEventActionEntity.getEventType());
 
         CalculateActionEntity calculateActionEntity = calculateActionRepository.findByDateAndHourAndMerchantIdAndStoreIdAndType( currentTime,
                 hour, trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), trackingEventActionEntity.getEventType() );
@@ -88,7 +88,7 @@ public class CalculateActionService {
                     .merchantId( trackingEventActionEntity.getMerchantId() )
                     .storeId( trackingEventActionEntity.getStoreId() )
                     .pvCount(1)
-                    .uvCount(1)
+                    .uvCount(union)
                     .build();
             CalculateActionEntity isSave = calculateActionRepository.saveAndFlush( calculateActionEntityNew );
             if( isSave == null ){
@@ -110,7 +110,7 @@ public class CalculateActionService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime ,"eventValue",trackingEventActionEntity.getEventValue());
 
         CalculateActionSearchEntity calculateActionSearchEntity = calculateActionSearchRepository.findByDateAndHourAndMerchantIdAndStoreIdAndKeyword(
                 currentTime,hour, trackingEventActionEntity.getMerchantId(),
@@ -140,7 +140,7 @@ public class CalculateActionService {
                     .storeId( trackingEventActionEntity.getStoreId() )
                     .keyword( trackingEventActionEntity.getEventValue() )
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .build();
             CalculateActionSearchEntity isSave = calculateActionSearchRepository.saveAndFlush( calculateActionSearchEntityNew );
             if( isSave == null ){
@@ -162,7 +162,7 @@ public class CalculateActionService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime ,"eventType",trackingEventActionEntity.getEventType());
         JSONObject valueJson = JSONObject.parseObject(trackingEventActionEntity.getEventValue());
 
         String handleName = valueJson.getString("handleName");
@@ -201,7 +201,7 @@ public class CalculateActionService {
                     .handleName( handleName )
                     .cmsIndex(index)
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .build();
             CalculateActionCmsEntity isSave = calculateActionCmsRepository.saveAndFlush( calculateActionCmsEntityNew );
             if( isSave == null ){
@@ -223,7 +223,7 @@ public class CalculateActionService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime,"eventType",trackingEventActionEntity.getEventType());
         Integer itemAmount = 0;
         Integer itemOrderCount = 0;
         Integer customerOrderCount = 0;
@@ -301,7 +301,7 @@ public class CalculateActionService {
                     .itemCode(valueJson.getString("itemCode"))
                     .imageSrc(valueJson.getString("imageSrc"))
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .itemCartCount(itemCartCount)
                     .customerCartCount(customerCartCount)
                     .customerOrderCount(customerOrderCount)
@@ -328,7 +328,7 @@ public class CalculateActionService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingEventActionEntity, currentTime );
+        Integer union = findUniqueId( trackingEventActionEntity, currentTime ,"eventMessage",trackingEventActionEntity.getEventMessage());
 
         CalculateActionShareEntity calculateActionShareEntity = calculateActionShareRepository.findByDateAndHourAndMerchantIdAndStoreIdAndShare(
                 currentTime,hour, trackingEventActionEntity.getMerchantId(),
@@ -358,7 +358,7 @@ public class CalculateActionService {
                     .merchantId( trackingEventActionEntity.getMerchantId() )
                     .storeId( trackingEventActionEntity.getStoreId() )
                     .pvCount( 1)
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .share( trackingEventActionEntity.getEventMessage() ).build();
             CalculateActionShareEntity isSave = calculateActionShareRepository.saveAndFlush( calculateActionShareEntityNew );
             if( isSave == null ){
@@ -370,9 +370,9 @@ public class CalculateActionService {
         return true;
     }
 
-    private Integer findUniqueId(TrackingEventActionEntity trackingEventActionEntity, Date date){
+    private Integer findUniqueId(TrackingEventActionEntity trackingEventActionEntity, Date date,String field,String fieldValue){
         ElasticComponent.SearchDocumentResponse trackingEventActionEntitySdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate(TRACKING_ACTION_INDEX,trackingEventActionEntity.getUniqueId(),
-                trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), date );
+                trackingEventActionEntity.getMerchantId(), trackingEventActionEntity.getStoreId(), date ,field,fieldValue);
         Integer union = 1;
         if( trackingEventActionEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
