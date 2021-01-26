@@ -31,24 +31,24 @@ public class ElasticsearchService {
                 stringBuilder.append("{\"term\":{\"scene\":\"").append(fieldValue).append("\"}},");
                 break;
             case "action":
-                stringBuilder.append("{\"term\":{\"action\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"action.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             case "path":
-                stringBuilder.append("{\"term\":{\"path\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"path.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventType":
-                stringBuilder.append("{\"term\":{\"eventType\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventType.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventValue":
-                stringBuilder.append("{\"term\":{\"eventValue\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventValue.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventMessage":
-                stringBuilder.append("{\"term\":{\"eventMessage\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventMessage.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             default:
                 break;
         }
-        stringBuilder.append("{\"term\":{\"uniqueId\":\"").append(uniqueId).append("\"}},");
+        stringBuilder.append("{\"term\":{\"uniqueId.keyword\":\"").append(uniqueId).append("\"}},");
         stringBuilder.append("{\"term\":{\"createDate\":\"").append(sdf.format(createDate)).append("\"}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
@@ -69,7 +69,7 @@ public class ElasticsearchService {
                 stringBuilder.append("{\"term\":{\"itemId\":\"").append(fieldValue).append("\"}},");
                 break;
             case "skuCode":
-                stringBuilder.append("{\"term\":{\"skuCode\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"skuCode.keyword\":\"").append(fieldValue).append("\"}},");
                 break;
             case "categoryId":
                 stringBuilder.append("{\"term\":{\"categoryId\":\"").append(fieldValue).append("\"}},");
@@ -124,7 +124,7 @@ public class ElasticsearchService {
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
-        stringBuilder.append("{\"terms\":{\"status\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
+        stringBuilder.append("{\"terms\":{\"status.keyword\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
