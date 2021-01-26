@@ -206,8 +206,8 @@ public class CalculatePageViewService {
                     .merchantId( trackingPageViewEntity.getMerchantId() )
                     .storeId( trackingPageViewEntity.getStoreId() )
                     .action( trackingPageViewEntity.getAction() )
-                    .uvCount( 1 )
-                    .pvCount( union )
+                    .uvCount( union )
+                    .pvCount( 1 )
                     .build();
             CalculatePageActionEntity isSave = calculatePageActionRepository.saveAndFlush( calculatePageActionEntityNew );
             if( isSave == null ){
