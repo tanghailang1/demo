@@ -21,6 +21,8 @@ public class CloudRabbitConfig {
     private String queueCloudTrackingCart;
     @Value("${output.rabbitmq.tracking.order.queue.name}")
     private String queueCloudTrackingOrder;
+    @Value("${output.rabbitmq.tracking.log.queue.name}")
+    private String queueCloudTrackingLog;
     @Value("${sync.tracking.page_route_key}")
     private String routingKeyPage;
     @Value("${sync.tracking.action_route_key}")
@@ -29,6 +31,8 @@ public class CloudRabbitConfig {
     private String routingKeyCart;
     @Value("${sync.tracking.order_route_key}")
     private String routingKeyOrder;
+    @Value("${sync.tracking.log_route_key}")
+    private String routingKeyLog;
 
     @Bean
     public Queue queueMessageCloudTrackingPage(){
@@ -48,6 +52,11 @@ public class CloudRabbitConfig {
     @Bean
     public Queue queueMessageCloudTrackingOrder(){
         return new Queue(queueCloudTrackingOrder);
+    }
+
+    @Bean
+    public Queue queueMessageCloudTrackingLog(){
+        return new Queue(queueCloudTrackingLog);
     }
 
     @Bean
@@ -73,5 +82,10 @@ public class CloudRabbitConfig {
     @Bean
     Binding bindingExchangeCloudTrackingOrder(Queue queueMessageCloudTrackingOrder, Exchange exchangeCloud) {
         return BindingBuilder.bind(queueMessageCloudTrackingOrder).to(exchangeCloud).with(routingKeyOrder).noargs();
+    }
+
+    @Bean
+    Binding bindingExchangeCloudTrackingLog(Queue queueMessageCloudTrackingLog, Exchange exchangeCloud) {
+        return BindingBuilder.bind(queueMessageCloudTrackingLog).to(exchangeCloud).with(routingKeyLog).noargs();
     }
 }

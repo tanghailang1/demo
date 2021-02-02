@@ -55,7 +55,7 @@ public class CalculateOrderService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
+        Integer union = findCustomerId( trackingEventOrderEntity, currentTime ,"scene",trackingEventOrderEntity.getScene().toString());
 
         CalculateOrderAmountEntity calculateOrderAmountEntity = calculateOrderAmountRepository.findByDateAndHourAndSceneAndMerchantIdAndStoreIdAndStatus(
                 currentTime, hour, trackingEventOrderEntity.getScene(), trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(), trackingEventOrderEntity.getStatus()  );
@@ -87,7 +87,7 @@ public class CalculateOrderService {
                     .storeId( trackingEventOrderEntity.getStoreId() )
                     .orderCount( 1 )
                     .orderAmount( trackingEventOrderEntity.getOrderAmount() )
-                    .customerCount( 1 )
+                    .customerCount( union )
                     .status( trackingEventOrderEntity.getStatus() )
                     .build();
             CalculateOrderAmountEntity isSave = calculateOrderAmountRepository.saveAndFlush( calculateOrderAmountEntityNew );
@@ -111,11 +111,12 @@ public class CalculateOrderService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
+
 
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
+            Integer union = findCustomerId( trackingEventOrderEntity, currentTime ,"itemId",orderItemDTOEntity.getItemId().toString());
             ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByItemIdAndMerchantIdAndStoreIdAndCreateDate(
                     TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getItemId(),
@@ -161,7 +162,7 @@ public class CalculateOrderService {
                             .scene( trackingEventOrderEntity.getScene() )
                             .itemOrderCount( orderItemDTOEntity.getOrderQty() )
                             .itemAmount( orderItemDTOEntity.getRowTotal() )
-                            .customerCount( 1 )
+                            .customerCount( union )
                             .merchantId( trackingEventOrderEntity.getMerchantId() )
                             .storeId( trackingEventOrderEntity.getStoreId() )
                             .date( currentTime )
@@ -194,10 +195,11 @@ public class CalculateOrderService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findCustomerId( trackingEventOrderEntity, currentTime );
+
         List<OrderItemDTOEntity> orderDTOEntityList = trackingEventOrderEntity.getOrderItems();
 
         for( OrderItemDTOEntity orderItemDTOEntity : orderDTOEntityList ){
+            Integer union = findCustomerId( trackingEventOrderEntity, currentTime ,"categoryId",orderItemDTOEntity.getCategoryId().toString());
             ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByCategoryIdAndMerchantIdAndStoreIdAndCreateDate(
                     TRACKING_ORDER_INDEX,
                     orderItemDTOEntity.getCategoryId(),
@@ -243,7 +245,7 @@ public class CalculateOrderService {
                             .scene( trackingEventOrderEntity.getScene() )
                             .categoryCount( orderItemDTOEntity.getOrderQty() )
                             .categoryAmount( orderItemDTOEntity.getRowTotal() )
-                            .customerCount( 1 )
+                            .customerCount( union )
                             .merchantId( trackingEventOrderEntity.getMerchantId() )
                             .storeId( trackingEventOrderEntity.getStoreId() )
                             .date( currentTime )
@@ -413,9 +415,9 @@ public class CalculateOrderService {
         return true;
     }
 
-    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity, Date date){
+    private Integer findCustomerId(TrackingEventOrderEntity trackingEventOrderEntity, Date date,String field,String fieldValue){
         ElasticComponent.SearchDocumentResponse trackingEventOrderEntitySdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId( TRACKING_ORDER_INDEX,date,
-                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(),trackingEventOrderEntity.getCustomerId()  );
+                trackingEventOrderEntity.getMerchantId(), trackingEventOrderEntity.getStoreId(),trackingEventOrderEntity.getCustomerId(),field,fieldValue );
         Integer union = 1;
         if( trackingEventOrderEntitySdr.getHits().getTotal() > 1 ){
             union = 0;

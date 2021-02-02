@@ -49,20 +49,20 @@ public class CalculatePageViewService {
      * @return
      */
     public Boolean receiveCalculatePageView(TrackingPageViewEntity trackingPageViewEntity){
-        Integer customer = 0;
+        Integer customer = 1;
         Date currentTime = trackingPageViewEntity.getCreateTime();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
-        if( trackingPageViewEntity.getCustomerId() > 1 ){
+        if( trackingPageViewEntity.getCustomerId() > 0 ){
             ElasticComponent.SearchDocumentResponse trackingPageViewEntityCustomerSdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_PAGE_INDEX,currentTime,
-                    trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() );
+                    trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId(),"","" );
             if( trackingPageViewEntityCustomerSdr.getHits().getTotal() > 1 ){
-                customer = 1;
+                customer = 0;
             }
         }
 
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime,"","" );
 
         CalculatePageViewEntity calculatePageViewEntity = calculatePageViewRepository.findByDateAndHourAndMerchantIdAndStoreId( currentTime,
                 hour, trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId() );
@@ -90,7 +90,7 @@ public class CalculatePageViewService {
                     .merchantId( trackingPageViewEntity.getMerchantId() )
                     .storeId( trackingPageViewEntity.getStoreId() )
                     .pvCount(1)
-                    .uvCount(1)
+                    .uvCount(union)
                     .customerCount(customer)
                     .build();
             CalculatePageViewEntity isSave = calculatePageViewRepository.saveAndFlush( calculatePageViewEntityNew );
@@ -114,7 +114,7 @@ public class CalculatePageViewService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime,"scene",trackingPageViewEntity.getScene().toString() );
 
         CalculatePageSceneEntity calculateMerchantSceneEntity = calculatePageSceneRepository.findByDateAndHourAndMerchantIdAndStoreIdAndScene(
                 currentTime,
@@ -149,7 +149,7 @@ public class CalculatePageViewService {
                     .storeId( trackingPageViewEntity.getStoreId() )
                     .scene( trackingPageViewEntity.getScene() )
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .build();
             CalculatePageSceneEntity isSave = calculatePageSceneRepository.saveAndFlush( calculatePageSceneEntityNew );
             if( isSave == null ){
@@ -172,7 +172,7 @@ public class CalculatePageViewService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime ,"action",trackingPageViewEntity.getAction());
 
         CalculatePageActionEntity calculatePageActionEntity = calculatePageActionRepository.findByDateAndHourAndMerchantIdAndStoreIdAndAction(
             currentTime,
@@ -206,7 +206,7 @@ public class CalculatePageViewService {
                     .merchantId( trackingPageViewEntity.getMerchantId() )
                     .storeId( trackingPageViewEntity.getStoreId() )
                     .action( trackingPageViewEntity.getAction() )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .pvCount( 1 )
                     .build();
             CalculatePageActionEntity isSave = calculatePageActionRepository.saveAndFlush( calculatePageActionEntityNew );
@@ -230,7 +230,7 @@ public class CalculatePageViewService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Integer union = findUniqueId( trackingPageViewEntity, currentTime );
+        Integer union = findUniqueId( trackingPageViewEntity, currentTime ,"path",trackingPageViewEntity.getPath());
 
         CalculatePagePathEntity calculateMerchantPathEntity = calculatePagePathRepository.findByDateAndHourAndMerchantIdAndStoreIdAndPath(
                 currentTime,
@@ -265,7 +265,7 @@ public class CalculatePageViewService {
                     .storeId( trackingPageViewEntity.getStoreId() )
                     .path( trackingPageViewEntity.getPath() )
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .build();
             CalculatePagePathEntity isSave = calculatePagePathRepository.saveAndFlush( calculateMerchantPathEntityNew );
             if( isSave == null ){
@@ -278,9 +278,9 @@ public class CalculatePageViewService {
         return true;
     }
 
-    private Integer findUniqueId(TrackingPageViewEntity trackingPageViewEntity, Date date){
+    private Integer findUniqueId(TrackingPageViewEntity trackingPageViewEntity, Date date,String field,String fieldValue){
         ElasticComponent.SearchDocumentResponse trackingPageViewEntitySdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( TRACKING_PAGE_INDEX,trackingPageViewEntity.getUniqueId(),
-                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), date );
+                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), date ,field,fieldValue);
         Integer union = 1;
         if( trackingPageViewEntitySdr.getHits().getTotal() > 1 ){
             union = 0;
