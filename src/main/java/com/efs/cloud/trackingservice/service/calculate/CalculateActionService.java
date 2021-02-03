@@ -165,14 +165,12 @@ public class CalculateActionService {
         Integer union = findUniqueId( trackingEventActionEntity, currentTime ,"eventType",trackingEventActionEntity.getEventType());
         JSONObject valueJson = JSONObject.parseObject(trackingEventActionEntity.getEventValue());
 
-        String handleName = valueJson.getString("handleName");
-        String index = "";
-        if (valueJson.containsKey("index")){
-            index = valueJson.getString("index");
-        }
-        CalculateActionCmsEntity calculateActionCmsEntity = calculateActionCmsRepository.findByDateAndHourAndMerchantIdAndStoreIdAndHandleNameAndCmsIndex(
+        String handleName = valueJson.containsKey("handleName")? valueJson.getString("handleName"):"";
+        String index = valueJson.containsKey("index")? valueJson.getString("index"):"";
+        
+        CalculateActionCmsEntity calculateActionCmsEntity = calculateActionCmsRepository.findByDateAndHourAndMerchantIdAndStoreIdAndHandleName(
                 currentTime,hour, trackingEventActionEntity.getMerchantId(),
-                trackingEventActionEntity.getStoreId(),handleName,index
+                trackingEventActionEntity.getStoreId(),handleName
         );
         if (calculateActionCmsEntity != null) {
             CalculateActionCmsEntity calculateActionCmsEntityExists = CalculateActionCmsEntity.builder()
