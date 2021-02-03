@@ -25,12 +25,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Date;
+import java.util.*;
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author jabez.huang
@@ -60,12 +56,12 @@ public class WXTrendService {
     private JSONObject getTrendData(String url, String beginDate, String endDate){
         JSONObject trendObject = wxCloudService.getStringData(url, beginDate, endDate);
         JSONArray listData = JSONArray.parseArray( JSONObject.toJSONString(trendObject.get("list")) );
-        //log.info("list:"+listData+listData.get(0));
        JSONObject jsonObject = (JSONObject) listData.get(0);
         return jsonObject;
     }
 
     public ServiceResult getDailyVisitTrend(WXDateInputDTO wxDateInputDTO) throws ParseException {
+
         List<String> days = DateUtil.getDays(wxDateInputDTO.getBeginDate(), wxDateInputDTO.getEndDate());
         if( days.size() > maxDay ){
             return ServiceResult.builder().code(-1001).msg("Max Day Less Than 30 days").data(null).build();
@@ -75,7 +71,7 @@ public class WXTrendService {
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
         }
-
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         Map<String,WXDailyVisitTrendEntity> dataMap = new HashMap<>();
         for( String day : days ){
             Integer merchantId = cloudStoreConfigOutputDTO.getCloudMerchantId();
@@ -98,7 +94,7 @@ public class WXTrendService {
                             .stayTimeUv( Double.valueOf(jsonObject.getString("stay_time_uv")) )
                             .stayTimeSession( Double.valueOf(jsonObject.getString("stay_time_session")) )
                             .visitDepth( Double.valueOf(jsonObject.getString("visit_depth")) )
-                            .updateTime( new Date() ).build();
+                            .updateTime( calendar.getTime() ).build();
                     WXDailyVisitTrendEntity wxDailyVisitTrendEntityExists = wxDailyVisitTrendRepository.saveAndFlush( wxDailyVisitTrendEntityNew );
                     dataMap.put( day, wxDailyVisitTrendEntityExists );
                 }
@@ -110,6 +106,7 @@ public class WXTrendService {
     }
 
     public ServiceResult getMonthVisitTrend(WXDateInputDTO wxDateInputDTO) throws ParseException {
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         CloudStoreConfigOutputDTO cloudStoreConfigOutputDTO = wxCloudService.getMerchant(wxDateInputDTO.getAppId());
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
@@ -133,7 +130,7 @@ public class WXTrendService {
                         .stayTimeUv( Double.valueOf(jsonObject.getString("stay_time_uv")) )
                         .stayTimeSession( Double.valueOf(jsonObject.getString("stay_time_session")) )
                         .visitDepth( Double.valueOf(jsonObject.getString("visit_depth")) )
-                        .updateTime( new Date() ).build();
+                        .updateTime( calendar.getTime() ).build();
                 wxMonthlyVisitTrendEnity = wxMonthlyVisitTrendRepository.saveAndFlush(wxMonthlyVisitTrendEntityNew);
             }
         }
@@ -141,6 +138,7 @@ public class WXTrendService {
     }
 
     public ServiceResult getWeeklyVisitTrend(WXDateInputDTO wxDateInputDTO){
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         CloudStoreConfigOutputDTO cloudStoreConfigOutputDTO = wxCloudService.getMerchant(wxDateInputDTO.getAppId());
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
@@ -164,7 +162,7 @@ public class WXTrendService {
                         .stayTimeUv( Double.valueOf(jsonObject.getString("stay_time_uv")) )
                         .stayTimeSession( Double.valueOf(jsonObject.getString("stay_time_session")) )
                         .visitDepth( Double.valueOf(jsonObject.getString("visit_depth")) )
-                        .updateTime( new Date() ).build();
+                        .updateTime( calendar.getTime() ).build();
                 wxWeeklyVisitTrendEntity = wxWeeklyVisitTrendRepository.saveAndFlush(wxWeeklyVisitTrendEntityNew);
             }
         }
@@ -172,11 +170,12 @@ public class WXTrendService {
     }
 
     public ServiceResult getDailySummary(WXDateInputDTO wxDateInputDTO) throws ParseException {
+
         List<String> days = DateUtil.getDays(wxDateInputDTO.getBeginDate(), wxDateInputDTO.getEndDate());
         if( days.size() > maxDay ){
             return ServiceResult.builder().code(-1001).msg("Max Day Less Than 30 days").data(null).build();
         }
-
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         CloudStoreConfigOutputDTO cloudStoreConfigOutputDTO = wxCloudService.getMerchant(wxDateInputDTO.getAppId());
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
@@ -200,7 +199,7 @@ public class WXTrendService {
                             .visitTotal( Integer.valueOf(jsonObject.getString("visit_total")) )
                             .sharePv( Integer.valueOf(jsonObject.getString("share_pv")) )
                             .shareUv( Integer.valueOf(jsonObject.getString("share_uv")) )
-                            .updateTime( new Date() ).build();
+                            .updateTime( calendar.getTime() ).build();
                     WXDailySummaryEntity wxDailySummaryEntityExists = wxDailySummaryRepository.saveAndFlush( wxDailySummaryEntityNew );
                     dataMap.put( day, wxDailySummaryEntityExists );
                 }
