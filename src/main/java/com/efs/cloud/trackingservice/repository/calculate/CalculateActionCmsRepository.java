@@ -18,9 +18,8 @@ public interface CalculateActionCmsRepository extends JpaRepository<CalculateAct
      * @param merchantId
      * @param storeId
      * @param handleName
-     * @param index
      * @return
      */
-    CalculateActionCmsEntity findByDateAndHourAndMerchantIdAndStoreIdAndHandleNameAndCmsIndex(Date date, Integer hour, Integer merchantId, Integer storeId, String handleName, String index);
+    CalculateActionCmsEntity findByDateAndHourAndMerchantIdAndStoreIdAndHandleName(Date date, Integer hour, Integer merchantId, Integer storeId, String handleName);
 
 }
