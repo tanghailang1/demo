@@ -74,6 +74,7 @@ public class WXRetainService {
     }
 
     public ServiceResult getDailyRetain(WXDateInputDTO wxDateInputDTO) throws ParseException {
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         List<String> days = DateUtil.getDays(wxDateInputDTO.getBeginDate(), wxDateInputDTO.getEndDate());
         if( days.size() > maxDay ){
             return ServiceResult.builder().code(-1001).msg("Max Day Less Than 30 days").data(null).build();
@@ -103,7 +104,7 @@ public class WXRetainService {
                             .visitUv( Integer.valueOf(responseEntity.get("uv")) )
                             .content( responseEntity.get("content") )
                             .contentNew( responseEntity.get("newContent") )
-                            .updateTime( new Date() ).build();
+                            .updateTime( calendar.getTime() ).build();
                     WXDailyRetainEntity WXDailyRetainEntityExists = wxDailyRetainRepository.saveAndFlush( wxDailyRetainEntityNew );
                     dataMap.put( day, WXDailyRetainEntityExists );
                 }
@@ -115,6 +116,7 @@ public class WXRetainService {
     }
 
     public ServiceResult getMonthlyRetain(WXDateInputDTO wxDateInputDTO){
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         CloudStoreConfigOutputDTO cloudStoreConfigOutputDTO = wxCloudService.getMerchant(wxDateInputDTO.getAppId());
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
@@ -133,7 +135,7 @@ public class WXRetainService {
                         .refDate(wxDateInputDTO.getBeginDate())
                         .visitUvNew(Integer.valueOf(responseEntity.get("newUv")))
                         .visitUv(Integer.valueOf(responseEntity.get("uv")))
-                        .updateTime(new Date()).build();
+                        .updateTime(calendar.getTime()).build();
                 wxMonthlyRetainEntity = wxMonthlyRetainRepository.saveAndFlush(wxMonthlyRetainEntityNew);
             }
         }
@@ -142,6 +144,7 @@ public class WXRetainService {
     }
 
     public ServiceResult getWeeklyRetain(WXDateInputDTO wxDateInputDTO){
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         CloudStoreConfigOutputDTO cloudStoreConfigOutputDTO = wxCloudService.getMerchant(wxDateInputDTO.getAppId());
         if( cloudStoreConfigOutputDTO == null ){
             return ServiceResult.builder().code(-1002).msg("error app").data(null).build();
@@ -162,7 +165,7 @@ public class WXRetainService {
                         .visitUv(Integer.valueOf(responseEntity.get("uv")))
                         .content(responseEntity.get("content"))
                         .contentNew(responseEntity.get("newContent"))
-                        .updateTime(new Date()).build();
+                        .updateTime(calendar.getTime()).build();
                 wxWeeklyRetainEntity = wxWeeklyRetainRepository.saveAndFlush(wxWeeklyRetainEntityNew);
             }
         }

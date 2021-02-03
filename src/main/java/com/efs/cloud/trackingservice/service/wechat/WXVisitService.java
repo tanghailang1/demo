@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author jabez.huang
@@ -55,6 +52,7 @@ public class WXVisitService {
 }
 
     public ServiceResult getVisitPage(WXDateInputDTO wxDateInputDTO) throws ParseException {
+        Calendar calendar = Calendar.getInstance(Locale.CHINA);
         List<String> days = DateUtil.getDays(wxDateInputDTO.getBeginDate(), wxDateInputDTO.getEndDate());
         if( days.size() > maxDay ){
             return ServiceResult.builder().code(-1001).msg("Max Day Less Than 7 days").data(null).build();
@@ -90,7 +88,7 @@ public class WXVisitService {
                                 .exitpagePv(Integer.valueOf(jsonObject.getString("exitpage_pv")))
                                 .pageSharePv(Integer.valueOf(jsonObject.getString("page_share_pv")))
                                 .pageShareUv(Integer.valueOf(jsonObject.getString("page_share_uv")))
-                                .updateTime( new Date() ).build();
+                                .updateTime( calendar.getTime() ).build();
                         wxVisitPageRepository.save( wxVisitPageEntityNew );
 
                     }
@@ -213,6 +211,7 @@ public class WXVisitService {
         if( jsonArray == null ){
             return false;
         }else {
+            Calendar calendar = Calendar.getInstance(Locale.CHINA);
             HashMap<String,String> distributionInfo = findDistributionInfo();
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -228,7 +227,7 @@ public class WXVisitService {
                                 .accessKey( (Integer) listObject.get("key") )
                                 .accessName( distributionInfo.get("access_source_session_cnt_"+listObject.get("key") ) )
                                 .accessValue( Integer.valueOf((Integer) listObject.get("value")) )
-                                .updateTime( new Date() ).build();
+                                .updateTime( calendar.getTime() ).build();
                         wxVisitDistributionSourceRepository.save( wxVisitDistributionSourceEntity );
                     }else if( index.equals("access_staytime_info") ){
                         WXVisitDistributionStaytimeEntity wxVisitDistributionStaytimeEntity = WXVisitDistributionStaytimeEntity.builder()
@@ -238,7 +237,7 @@ public class WXVisitService {
                                 .accessKey( (Integer) listObject.get("key") )
                                 .accessName( distributionInfo.get("access_staytime_info_"+listObject.get("key") ) )
                                 .accessValue( Integer.valueOf((Integer) listObject.get("value")) )
-                                .updateTime( new Date() ).build();
+                                .updateTime( calendar.getTime() ).build();
                         wxVisitDistributionStaytimeRepository.save( wxVisitDistributionStaytimeEntity );
                     }else if( index.equals("access_depth_info") ){
                         WXVisitDistributionDepthEntity wxVisitDistributionDepthEntity = WXVisitDistributionDepthEntity.builder()
@@ -248,7 +247,7 @@ public class WXVisitService {
                                 .accessKey( (Integer) listObject.get("key") )
                                 .accessName( distributionInfo.get("access_depth_info_"+listObject.get("key") ) )
                                 .accessValue( Integer.valueOf((Integer) listObject.get("value")) )
-                                .updateTime( new Date() ).build();
+                                .updateTime( calendar.getTime() ).build();
                         wxVisitDistributionDepthRepository.save( wxVisitDistributionDepthEntity );
                     }
                 }
