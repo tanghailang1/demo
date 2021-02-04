@@ -349,7 +349,6 @@ public class CalculateOrderService {
      * @return
      */
     public boolean receiveCalculateOrderCustomer(TrackingEventOrderEntity trackingEventOrderEntity){
-        System.out.println("新老客------");
         Date currentTime = trackingEventOrderEntity.getCreateTime();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime( currentTime );

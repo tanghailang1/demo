@@ -129,7 +129,6 @@ public class ElasticsearchService {
         stringBuilder.append("{\"terms\":{\"status.keyword\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
-        System.out.println("body:" + body);
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
         return searchDocumentResponse;
     }
