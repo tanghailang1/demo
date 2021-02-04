@@ -26,11 +26,8 @@ public class IPUtils {
      * 静态代码块，保证项目启动只获取一次文件
      */
     static {
-
         File database = null;
-
         try {
-
             // 通过 InputStream 流式读取文件，解决无法通过File方式读取jar包内的文件的问题
             database = getFile("GeoLite2-City.mmdb","geolite2.mmdb");
             log.info("-------加载文件");
@@ -65,7 +62,7 @@ public class IPUtils {
                 return country.getNames().get("zh-CN");
             }
         } catch (Exception e) {
-            log.error("ip获取城市error:" + ip + "," + e.getMessage());
+            //log.error("ip获取城市error:" + ip + "," + e.getMessage());
         }
         return "未知";
     }
