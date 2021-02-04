@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service;
 
 import com.efs.cloud.trackingservice.component.ElasticComponent;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -124,10 +125,11 @@ public class ElasticsearchService {
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
-        stringBuilder.append("{\"range\":{\"createTime\":{\"lt\":\"").append(createTime).append("\"}}},");
+        stringBuilder.append("{\"range\":{\"createTime\":{\"lt\":\"").append(DateUtil.getDateToEsDate(createTime)).append("\"}}},");
         stringBuilder.append("{\"terms\":{\"status.keyword\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
+        System.out.println("body:" + body);
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
         return searchDocumentResponse;
     }

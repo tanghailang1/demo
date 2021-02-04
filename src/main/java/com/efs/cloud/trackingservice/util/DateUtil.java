@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -95,5 +98,33 @@ public class DateUtil {
         /** 取得的时间就是UTC标准时间 */
         Date utcDate=new Date(calendar.getTimeInMillis());
         return getDateToString(utcDate,"");
+    }
+
+    public static String getDateToEsDate(String dateStr) {
+
+        String dateRes = null;
+        if (null == dateStr) {
+            return dateRes;
+        }
+
+        try {
+            // 字符串转日期
+            DateTimeFormatter strToDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            TemporalAccessor dateTemporal = strToDateFormatter.parse(dateStr);
+            LocalDateTime date = LocalDateTime.from(dateTemporal);
+
+            //System.out.println("字符串转为日期结果:" + date);
+
+            // 格式化日期时间
+            DateTimeFormatter dateToStrFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateRes = dateToStrFormatter.format(date);
+
+            dateRes = dateRes.replace(" ","T") + "Z";
+            //System.out.println("格式化日期时间:" + dateRes);
+        } catch (Exception ex) {
+            // System.out.println(ex);
+        } finally {
+            return dateRes;
+        }
     }
 }
