@@ -1,6 +1,7 @@
 package com.efs.cloud.trackingservice.service.calculate;
 
 import com.alibaba.fastjson.JSONObject;
+import com.efs.cloud.trackingservice.util.DateUtil;
 import com.efs.cloud.trackingservice.util.IPUtils;
 import com.efs.cloud.trackingservice.component.ElasticComponent;
 import com.efs.cloud.trackingservice.entity.calculate.*;
@@ -363,7 +364,9 @@ public class CalculateOrderService {
         Integer oldCustomerOrderAmount = 0;
         Integer newCustomerOrderCount = 0;
         Integer newCustomerOrderAmount = 0;
-        ElasticComponent.SearchDocumentResponse cloudOrderSdr = elasticsearchService.findByIndexAndCustomerIdAndStatus(SALES_ORDER_INDEX,trackingEventOrderEntity.getCustomerId());
+        //转化成UTC时间去查询ES
+        String createTime = DateUtil.localToUTC(DateUtil.getDateToString(currentTime,""));
+        ElasticComponent.SearchDocumentResponse cloudOrderSdr = elasticsearchService.findByIndexAndCustomerIdAndStatus(SALES_ORDER_INDEX,trackingEventOrderEntity.getCustomerId(),createTime);
         if (cloudOrderSdr.getHits().getTotal() > 0) {
             oldCustomerOrderCount = 1;
             oldCustomerOrderAmount = trackingEventOrderEntity.getOrderAmount();

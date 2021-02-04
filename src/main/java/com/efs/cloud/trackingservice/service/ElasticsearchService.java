@@ -119,11 +119,12 @@ public class ElasticsearchService {
         return searchDocumentResponse;
     }
 
-    public ElasticComponent.SearchDocumentResponse findByIndexAndCustomerIdAndStatus(String index, Integer customerId){
+    public ElasticComponent.SearchDocumentResponse findByIndexAndCustomerIdAndStatus(String index, Integer customerId,String createTime){
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
+        stringBuilder.append("{\"range\":{\"createTime\":{\"lt\":\"").append(createTime).append("\"}}},");
         stringBuilder.append("{\"terms\":{\"status.keyword\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
