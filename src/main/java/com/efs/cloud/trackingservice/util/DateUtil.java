@@ -6,7 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * 日期转换工具类
@@ -63,38 +68,64 @@ public class DateUtil {
         return dayBefore;
     }
 
-    public static List<String> getDays(String startTime, String endTime) {
-
-        // 返回的日期集合
-        List<String> days = new ArrayList<String>();
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    /**
+     *
+     * <p>Description: 本地时间转化为UTC时间</p>
+     * @param localTime
+     * @return
+     * @author wgs
+     * @date  2018年10月19日 下午2:23:43
+     *
+     */
+    public static String localToUTC(String localTime) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        Date localDate= null;
         try {
-            Date start = dateFormat.parse(startTime);
-            Date end = dateFormat.parse(endTime);
-
-            Calendar tempStart = Calendar.getInstance();
-            tempStart.setTime(start);
-
-            Calendar tempEnd = Calendar.getInstance();
-            tempEnd.setTime(end);
-            // 日期加1(包含结束)
-            tempEnd.add(Calendar.DATE, +1);
-            while (tempStart.before(tempEnd)) {
-                days.add(dateFormat.format(tempStart.getTime()));
-                tempStart.add(Calendar.DAY_OF_YEAR, 1);
-            }
-
+            localDate = sdf.parse(localTime);
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-        return days;
+        long localTimeInMillis=localDate.getTime();
+        /** long时间转换成Calendar */
+        Calendar calendar= Calendar.getInstance();
+        calendar.setTimeInMillis(localTimeInMillis);
+        /** 取得时间偏移量 */
+        int zoneOffset = calendar.get(java.util.Calendar.ZONE_OFFSET);
+        /** 取得夏令时差 */
+        int dstOffset = calendar.get(java.util.Calendar.DST_OFFSET);
+        /** 从本地时间里扣除这些差量，即可以取得UTC时间*/
+        calendar.add(java.util.Calendar.MILLISECOND, -(zoneOffset + dstOffset));
+        /** 取得的时间就是UTC标准时间 */
+        Date utcDate=new Date(calendar.getTimeInMillis());
+        return getDateToString(utcDate,"");
     }
 
-    public static Date stringToDate(String date, String format) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
-        return simpleDateFormat.parse(date);
-    }
+    public static String getDateToEsDate(String dateStr) {
 
+        String dateRes = null;
+        if (null == dateStr) {
+            return dateRes;
+        }
+
+        try {
+            // 字符串转日期
+            DateTimeFormatter strToDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            TemporalAccessor dateTemporal = strToDateFormatter.parse(dateStr);
+            LocalDateTime date = LocalDateTime.from(dateTemporal);
+
+            //System.out.println("字符串转为日期结果:" + date);
+
+            // 格式化日期时间
+            DateTimeFormatter dateToStrFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            dateRes = dateToStrFormatter.format(date);
+
+            dateRes = dateRes.replace(" ","T") + "Z";
+            //System.out.println("格式化日期时间:" + dateRes);
+        } catch (Exception ex) {
+            // System.out.println(ex);
+        } finally {
+            return dateRes;
+        }
+    }
 }
