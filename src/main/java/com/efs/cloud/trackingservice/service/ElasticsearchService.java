@@ -49,7 +49,7 @@ public class ElasticsearchService {
             default:
                 break;
         }
-        stringBuilder.append("{\"term\":{\"uniqueId.keyword\":\"").append(uniqueId).append("\"}},");
+        stringBuilder.append("{\"term\":{\"uniqueId\":\"").append(uniqueId).append("\"}},");
         stringBuilder.append("{\"term\":{\"createDate\":\"").append(sdf.format(createDate)).append("\"}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
@@ -70,7 +70,7 @@ public class ElasticsearchService {
                 stringBuilder.append("{\"term\":{\"itemId\":\"").append(fieldValue).append("\"}},");
                 break;
             case "skuCode":
-                stringBuilder.append("{\"term\":{\"skuCode.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"skuCode\":\"").append(fieldValue).append("\"}},");
                 break;
             case "categoryId":
                 stringBuilder.append("{\"term\":{\"categoryId\":\"").append(fieldValue).append("\"}},");
@@ -126,7 +126,7 @@ public class ElasticsearchService {
         stringBuilder.append("\"query\":{\"bool\":{\"must\":[");
         stringBuilder.append("{\"term\":{\"customerId\":\"").append(customerId).append("\"}},");
         stringBuilder.append("{\"range\":{\"createTime\":{\"lt\":\"").append(DateUtil.getDateToEsDate(createTime)).append("\"}}},");
-        stringBuilder.append("{\"terms\":{\"status.keyword\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
+        stringBuilder.append("{\"terms\":{\"status\":[").append("\"TRADE_FINISHED\",\"WAIT_SELLER_SEND_GOODS\",\"WAIT_BUYER_CONFIRM_GOODS\",\"WAIT_BUYER_PAY\"").append("]}}");
         stringBuilder.append("]}}}");
         String body = stringBuilder.toString();
         ElasticComponent.SearchDocumentResponse searchDocumentResponse = elasticComponent.searchDocument(index, body);
