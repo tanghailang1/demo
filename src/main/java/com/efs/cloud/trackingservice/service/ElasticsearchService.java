@@ -32,19 +32,22 @@ public class ElasticsearchService {
                 stringBuilder.append("{\"term\":{\"scene\":\"").append(fieldValue).append("\"}},");
                 break;
             case "action":
-                stringBuilder.append("{\"term\":{\"action.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"action\":\"").append(fieldValue).append("\"}},");
                 break;
             case "path":
-                stringBuilder.append("{\"term\":{\"path.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"path\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventType":
-                stringBuilder.append("{\"term\":{\"eventType.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventType\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventValue":
-                stringBuilder.append("{\"term\":{\"eventValue.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventValue\":\"").append(fieldValue).append("\"}},");
                 break;
             case "eventMessage":
-                stringBuilder.append("{\"term\":{\"eventMessage.keyword\":\"").append(fieldValue).append("\"}},");
+                stringBuilder.append("{\"term\":{\"eventMessage\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "campaign":
+                stringBuilder.append("{\"term\":{\"campaign\":\"").append(fieldValue).append("\"}},");
                 break;
             default:
                 break;
@@ -77,6 +80,9 @@ public class ElasticsearchService {
                 break;
             case "scene":
                 stringBuilder.append("{\"term\":{\"scene\":\"").append(fieldValue).append("\"}},");
+                break;
+            case "campaign":
+                stringBuilder.append("{\"term\":{\"campaign\":\"").append(fieldValue).append("\"}},");
                 break;
             default:
                 break;

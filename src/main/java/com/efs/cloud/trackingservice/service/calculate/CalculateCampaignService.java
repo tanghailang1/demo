@@ -53,11 +53,11 @@ public class CalculateCampaignService {
         Integer hour = calendar.get(Calendar.HOUR_OF_DAY);
 
         ElasticComponent.SearchDocumentResponse trackingPageViewEntityCustomerSdr = elasticsearchService.findByIndexByCreateDateAndMerchantIdAndStoreIdAndCustomerId(TRACKING_PAGE_INDEX,currentTime,
-                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() ,"","");
+                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(),trackingPageViewEntity.getCustomerId() ,"campaign",trackingPageViewEntity.getCampaign());
 
         Integer customer = 1;
         ElasticComponent.SearchDocumentResponse trackingPageViewEntityUnionSdr = elasticsearchService.findByIndexByUniqueIdAndMerchantIdAndStoreIdAndCreateDate( TRACKING_PAGE_INDEX,trackingPageViewEntity.getUniqueId(),
-                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), currentTime ,"","");
+                trackingPageViewEntity.getMerchantId(), trackingPageViewEntity.getStoreId(), currentTime ,"campaign",trackingPageViewEntity.getCampaign());
         Integer union = 1;
         if( trackingPageViewEntityUnionSdr.getHits().getTotal() > 1 ){
             union = 0;
@@ -104,7 +104,7 @@ public class CalculateCampaignService {
                     .campaignName( trackingPageViewEntity.getCampaign() )
                     .scene(trackingPageViewEntity.getScene())
                     .pvCount( 1 )
-                    .uvCount( 1 )
+                    .uvCount( union )
                     .customerCount( customer )
                     .cartCount( 0 )
                     .createOrderCount( 0 )
